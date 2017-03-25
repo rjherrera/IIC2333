@@ -32,6 +32,7 @@ typedef struct node{
 
 Node* node_init(Process* process){
 	Node* al = malloc(sizeof(Node));
+	al -> process = process;
 	al -> next = NULL;
 	return al;
 }
@@ -105,9 +106,8 @@ void Enqueue(Process* process, Queue* queue){
 		set_next_node(queue -> rear, new_node);
 		queue -> rear = new_node;
 	}
+	printf("Proceso %i ha entrado a la cola\n", process -> pid);
 }
-
-https://raiperez@bitbucket.org/t0_rairai/t0_ssoo_rairai.gitrt_
 
 Process* Dequeue(Queue* queue){
 	Process* dequeued_process = queue -> head -> process;
@@ -115,6 +115,10 @@ Process* Dequeue(Queue* queue){
 		queue -> head = NULL;
 		queue -> rear = NULL;
 	}
+	else {
+		queue -> head = queue -> head -> next;
+	}
+	printf("Proceso %i ha salido de la cola\n", dequeued_process -> pid);
 	return dequeued_process;
 }
 
@@ -127,10 +131,9 @@ void see_queue(Queue* queue){
 		printf("Queue empty\n");
 	}
 	else {
-		printf("Went to else \n");
 		Node* n = first_in_queue(queue);
 		while (n != NULL){
-			printf("%i\n",n -> process -> pid);
+			printf("%i  ",n -> process -> pid);
 			n = get_next(n);
 		}
 		printf("\n");
@@ -148,6 +151,7 @@ int main(int argc, char *argv[]){
 	Queue* queue = queue_init();
 	see_queue(queue);
 	Enqueue(p1, queue);
+	//printf("%i\n", queue -> head -> process -> pid);
 	see_queue(queue);
 	Enqueue(p3, queue);
 	see_queue(queue);
@@ -163,4 +167,7 @@ int main(int argc, char *argv[]){
 	see_queue(queue);
 	Enqueue(p3, queue);
 	see_queue(queue);
+
+	free_queue(queue);
+	
 }
