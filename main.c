@@ -126,7 +126,9 @@ Process* Dequeue(Queue* queue){
 		queue -> rear = NULL;
 	}
 	else {
+		Node* n = queue -> head;
 		queue -> head = queue -> head -> next;
+		free(n);
 	}
 	printf("Proceso %i ha salido de la cola\n", dequeued_process -> pid);
 	return dequeued_process;
