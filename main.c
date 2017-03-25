@@ -23,6 +23,12 @@ Process* new_process(int pid, int priority, int exec_time, int event_length, int
 	return al;
 }
 
+void free_process(Process* process){
+	// free(process -> events);
+	// free(process -> name);
+	free(process);
+}
+
 // NODE
 
 typedef struct node{
@@ -37,18 +43,19 @@ Node* node_init(Process* process){
 	return al;
 }
 
-int isLast(Node* node){
-	if (node -> next == NULL){
-		return 1;
-	}
-	else {
-		return 0;
-	}
-}
+// int isLast(Node* node){
+// 	if (node -> next == NULL){
+// 		return 1;
+// 	}
+// 	else {
+// 		return 0;
+// 	}
+// }
 
 void free_linked_nodes(Node* node){
-	if (isLast(node) == 1){
+	if (node -> next == NULL){
 		// free_process(node -> process);
+		free_process(node -> process);
 		free(node);
 	}
 	else {
