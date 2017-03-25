@@ -55,11 +55,14 @@ Node* node_init(Process* process){
 void free_linked_nodes(Node* node){
 	if (node -> next == NULL){
 		// free_process(node -> process);
+		printf("Liberado el node c/ process %i\n",node->process->pid);
 		free_process(node -> process);
 		free(node);
 	}
 	else {
 		free_linked_nodes(node -> next);
+		node -> next = NULL;
+		free_linked_nodes(node);
 	}
 }
 
