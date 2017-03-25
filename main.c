@@ -107,6 +107,8 @@ void Enqueue(Process* process, Queue* queue){
 	}
 }
 
+https://raiperez@bitbucket.org/t0_rairai/t0_ssoo_rairai.gitrt_
+
 Process* Dequeue(Queue* queue){
 	Process* dequeued_process = queue -> head -> process;
 	if (queue -> head == queue -> rear){
@@ -125,6 +127,7 @@ void see_queue(Queue* queue){
 		printf("Queue empty\n");
 	}
 	else {
+		printf("Went to else \n");
 		Node* n = first_in_queue(queue);
 		while (n != NULL){
 			printf("%i\n",n -> process -> pid);
