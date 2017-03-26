@@ -1,31 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // PROCESS
 
 typedef struct process{
+	char name[257];
 	int pid;
 	int priority;
-	int exec_time;
+	int arrival;
 	int event_length;
 	int* events;
-	char* name;
 }Process;
 
-Process* new_process(int pid, int priority, int exec_time, int event_length, int* events, char* name){
+Process* new_process(int pid, int priority, int arrival, int event_length, int* events, char* name){
 	Process* al = malloc(sizeof(Process));
 	al -> pid = pid;
 	al -> priority = priority;
-	al -> exec_time = exec_time;
+	al -> arrival = arrival;
 	al -> event_length = event_length;
 	al -> events = events;
-	al -> name = name;
+	strcpy(al -> name, name);
 	return al;
 }
 
 void free_process(Process* process){
-	// free(process -> events);
-	// free(process -> name);
+	free(process -> events);
 	free(process);
 }
 
@@ -43,19 +43,10 @@ Node* node_init(Process* process){
 	return al;
 }
 
-// int isLast(Node* node){
-// 	if (node -> next == NULL){
-// 		return 1;
-// 	}
-// 	else {
-// 		return 0;
-// 	}
-// }
-
 void free_linked_nodes(Node* node){
 	if (node -> next == NULL){
 		// free_process(node -> process);
-		printf("Liberado el node c/ process %i\n",node->process->pid);
+		// printf("Liberado el node c/ process %i\n",node->process->pid);
 		free_process(node -> process);
 		free(node);
 	}
@@ -81,12 +72,14 @@ Node* get_next(Node* node){
 typedef struct queue{
 	Node* head;
 	Node* rear;
+	int length;
 }Queue;
 
 Queue* queue_init(){
 	Queue* al = malloc(sizeof(Queue));
 	al -> head = NULL;
 	al -> rear = NULL;
+	al -> length = 0;
 	return al;
 }
 
@@ -116,6 +109,7 @@ void Enqueue(Process* process, Queue* queue){
 		set_next_node(queue -> rear, new_node);
 		queue -> rear = new_node;
 	}
+	queue -> length += 1;
 	printf("Proceso %i ha entrado a la cola\n", process -> pid);
 }
 
@@ -130,6 +124,7 @@ Process* Dequeue(Queue* queue){
 		queue -> head = queue -> head -> next;
 		free(n);
 	}
+	queue -> length -= 1;
 	printf("Proceso %i ha salido de la cola\n", dequeued_process -> pid);
 	return dequeued_process;
 }
@@ -143,6 +138,7 @@ void see_queue(Queue* queue){
 		printf("Queue empty\n");
 	}
 	else {
+		printf("Queue status:\n");
 		Node* n = first_in_queue(queue);
 		while (n != NULL){
 			printf("%i  ",n -> process -> pid);
@@ -155,31 +151,61 @@ void see_queue(Queue* queue){
 // END QUEUE
 
 int main(int argc, char *argv[]){
-	int a;
-	char b;
-	Process* p1 = new_process(1,1,1,1, &a, &b);
-	Process* p2 = new_process(2,2,2,2, &a, &b);
-	Process* p3 = new_process(3,3,3,3, &a, &b);
-	Queue* queue = queue_init();
-	see_queue(queue);
-	Enqueue(p1, queue);
-	//printf("%i\n", queue -> head -> process -> pid);
-	see_queue(queue);
-	Enqueue(p3, queue);
-	see_queue(queue);
-	Enqueue(p2, queue);
-	see_queue(queue);
-	Process* sefue = Dequeue(queue);
-	printf("SALIO! %i\n", sefue->pid);
-	see_queue(queue);
-	Enqueue(p1, queue);
-	see_queue(queue);
-	Process* sefue2 = Dequeue(queue);
-	printf("SALIO! %i\n", sefue2->pid);
-	see_queue(queue);
-	Enqueue(p3, queue);
-	see_queue(queue);
+	if ((argc != 3) && (argc != 4)){
+		printf("Modo de uso: %s <scheduler> <file> <quantum>\n", argv[0]);
+		printf("\t<scheduler> es puede ser 'fcfs', 'roundrobin' o 'random'\n");
+		printf("\t<file> es el nombre del archivo con el detalle de los procesos\n");
+		printf("\t<quantum> es opcional, es 3 por defecto y corresponde al quantum con scheduler roundrobin\n");
+		return 1;
+	}
+	else {
+		// Set variables
+		int quantum;
+		if (argc == 4){
+			sscanf(argv[3], "%i", &quantum);
+		}
+		else {
+			quantum = 3;
+		}
 
-	free_queue(queue);
-	
+		// Process array
+		// por ahora en una queue pero dps en otra edd yo creo
+		Queue* processed_read = queue_init();
+		// Load processes
+		int current_pid = 0;
+		FILE* fr = fopen(argv[2], "r");
+		char* name = malloc(sizeof(char)*257);
+		int priority, arrival, event_length;
+		while (fscanf(fr, "%s %i %i %i", name, &priority, &arrival, &event_length) == 4){
+			int* events = malloc(sizeof(int)*(event_length*2-1));
+			for(int i=0; i<(2*event_length-1); i++){
+				fscanf(fr, "%i", &events[i]);
+			}
+			Process* process = new_process(current_pid, priority, arrival, event_length, events, name);
+			Enqueue(process, processed_read);
+			current_pid += 1;
+		}
+		free(name);
+		// if (feof(fr)){
+		// 	printf("File ended\n");
+		// }
+		// else {
+		// 	printf("Some error \n");
+		// }
+		// printf("%s %i %i %i\n", name, priority, arrival, event_length);
+		// Check Expected Scheduler
+		if (strcmp(argv[1],"fcfs") == 0){
+			Queue* queue = queue_init();
+
+		} else if (strcmp(argv[1],"roundrobin") == 0){
+
+		} else if (strcmp(argv[1],"random") == 0){
+
+		}
+		else {
+			printf("\t<scheduler> debe ser 'fcfs', 'roundrobin' o 'random'\n");
+			return 1;
+		}
+
+	}
 }
