@@ -23,7 +23,6 @@ typedef struct process{
 
 Process* new_process(int pid, int priority, int arrival, int event_length, int* events, char* name){
 	Process* al = malloc(sizeof(Process));
-	printf("dir_mem proc pid %i : %p AND %p\n", pid, al, &al);
 	al -> pid = pid;
 	al -> priority = priority;
 	al -> arrival = arrival;
@@ -73,7 +72,6 @@ typedef struct node{
 
 Node* node_init(Process* process){
 	Node* al = malloc(sizeof(Node));
-	printf("dir_mem node d pid %i : %p AND %p\n", process->pid, al, &al);
 	al -> process = process;
 	al -> next = NULL;
 	return al;
@@ -114,7 +112,6 @@ typedef struct queue{
 
 Queue* queue_init(){
 	Queue* al = malloc(sizeof(Queue));
-	printf("dir_mem queue: %p AND %p\n", al, &al);
 	al -> head = NULL;
 	al -> rear = NULL;
 	al -> length = 0;
