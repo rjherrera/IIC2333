@@ -195,6 +195,7 @@ Process* Dequeue_index(Queue* queue, int index){
 		parent -> next = selected_node -> next;
 	}
 	dequeued_process = selected_node -> process;
+	selected_node -> next = NULL;
 	free(selected_node);
 	queue -> length -= 1;
 	return dequeued_process;
