@@ -363,6 +363,7 @@ int main(int argc, char *argv[]){
 					} else if (strcmp(argv[1],"random") == 0){
 						int index_selected = rand() % ready_queue -> length;
 						is_running = Dequeue_index(ready_queue, index_selected);
+						is_running -> selected += 1;
 						if (is_running -> first_exec == -1){
 							is_running -> first_exec = current_time;
 						}
