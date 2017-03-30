@@ -80,8 +80,6 @@ Node* node_init(Process* process){
 void free_linked_nodes(Node* node){
 	// libera los nodos, destruyendo tambien los procesos
 	if (node -> next == NULL){
-		// free_process(node -> process);
-		// printf("Liberado el node c/ process %i\n",node->process->pid);
 		free_process(node -> process);
 		free(node);
 	}
@@ -93,11 +91,6 @@ void free_linked_nodes(Node* node){
 }
 
 void set_next_node(Node* node, Node* new_node){
-	if(node -> next != NULL){
-		printf("WTF!!\n\n\n\n");
-	} else if (node == NULL){
-		printf("NODE IS NULL!?!\n\n\n");
-	}
 	node -> next = new_node;
 }
 
@@ -154,10 +147,8 @@ void Enqueue(Process* process, Queue* queue){
 }
 
 Process* Dequeue(Queue* queue){
-	printf("entro al dequeue\n");
 	Process* dequeued_process = queue -> head -> process;
 	if (queue -> head == queue -> rear){
-		printf("entro al if\n");
 		free(queue -> head);
 		queue -> head = NULL;
 		queue -> rear = NULL;
@@ -168,7 +159,6 @@ Process* Dequeue(Queue* queue){
 		free(n);
 	}
 	queue -> length -= 1;
-	// printf("Proceso %i ha salido de la cola\n", dequeued_process -> pid);
 	return dequeued_process;
 }
 
@@ -179,17 +169,15 @@ Process* Dequeue_index(Queue* queue, int index){
 	Node* parent = NULL;
 	Node* selected_node = queue -> head;
 	Node* child = selected_node -> next;
-	Node* temp;
 	Process* dequeued_process;
 	int i = 0;
 	while(i < index){
 		parent = selected_node;
-		temp = selected_node;
 		selected_node = child;
-		child = temp -> next;
+		child =  child -> next;
 		i++;
 	}
-	if (child == NULL){
+	if (!child){
 		parent -> next = NULL;
 		queue -> rear = parent;
 	}
@@ -212,7 +200,6 @@ void see_queue(Queue* queue){
 		printf("Queue empty\n");
 	}
 	else {
-		printf("Queue status: head: %i, rear %i \n", queue->head->process->pid, queue->rear->process->pid);
 		Node* n = first_in_queue(queue);
 		while (n != NULL){
 			printf("%i  ",n -> process -> pid);
@@ -372,6 +359,7 @@ int main(int argc, char *argv[]){
 
 					} else if (strcmp(argv[1],"random") == 0){
 						int index_selected = rand() % ready_queue -> length;
+						printf("index_selected : %i", index_selected);
 						see_queue(ready_queue);
 						is_running = Dequeue_index(ready_queue, index_selected);
 						see_queue(ready_queue);
