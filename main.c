@@ -149,8 +149,10 @@ void Enqueue(Process* process, Queue* queue){
 }
 
 Process* Dequeue(Queue* queue){
+	printf("entro al dequeue\n");
 	Process* dequeued_process = queue -> head -> process;
 	if (queue -> head == queue -> rear){
+		printf("entro al if\n");
 		free(queue -> head);
 		queue -> head = NULL;
 		queue -> rear = NULL;
