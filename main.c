@@ -93,6 +93,9 @@ void free_linked_nodes(Node* node){
 }
 
 void set_next_node(Node* node, Node* new_node){
+	if(node -> next != NULL){
+		printf("WTF!!\n\n\n\n");
+	}
 	node -> next = new_node;
 }
 
