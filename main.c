@@ -212,7 +212,7 @@ void see_queue(Queue* queue){
 		printf("Queue empty\n");
 	}
 	else {
-		printf("Queue status:\n");
+		printf("Queue status: head: %i, rear %i \n", queue->head->process->pid, queue->rear->process->pid);
 		Node* n = first_in_queue(queue);
 		while (n != NULL){
 			printf("%i  ",n -> process -> pid);
@@ -302,7 +302,9 @@ int main(int argc, char *argv[]){
 			// revisamos si llega un proceso
 			for(int i=0;i<total_processes;i++){
 				if (current_time == processes_read[i] -> arrival){
+					see_queue(ready_queue);
 					Enqueue(processes_read[i], ready_queue);
+					see_queue(ready_queue);
 					printf("Proceso %i ha sido creado y ha entrado a la cola ready con estado READY  | t = %i\n", processes_read[i] -> pid, current_time);
 				}
 			}
@@ -312,7 +314,9 @@ int main(int argc, char *argv[]){
 					// los procesos que estan waiting
 					if (processes_read[i] -> events[processes_read[i] -> counter] == 0){
 						processes_read[i] -> counter += 1;
+						see_queue(ready_queue);
 						Enqueue(processes_read[i], ready_queue);
+						see_queue(ready_queue);
 						strcpy(processes_read[i] -> status, "READY");
 						printf("Proceso %i ha dejado de esperar y ha entrado a la cola ready (WAITING -> READY)| t = %i\n", processes_read[i] -> pid, current_time);
 					}
@@ -368,7 +372,9 @@ int main(int argc, char *argv[]){
 
 					} else if (strcmp(argv[1],"random") == 0){
 						int index_selected = rand() % ready_queue -> length;
+						see_queue(ready_queue);
 						is_running = Dequeue_index(ready_queue, index_selected);
+						see_queue(ready_queue);
 						is_running -> selected += 1;
 						if (is_running -> first_exec == -1){
 							is_running -> first_exec = current_time;
