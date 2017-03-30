@@ -386,6 +386,7 @@ int main(int argc, char *argv[]){
 			for(int i=0;i<total_processes;i++){
 				if (strcmp(processes_read[i] -> status, "WAITING") == 0){
 					processes_read[i] -> events[processes_read[i] -> counter] -= 1;
+					processes_read[i] -> added_waiting += 1;
 				} else if (strcmp(processes_read[i] -> status, "READY") == 0){
 					processes_read[i] -> added_waiting += 1;
 				} else if (strcmp(processes_read[i] -> status, "RUNNING") == 0){
