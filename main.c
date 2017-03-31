@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define FIXED_SIZE 100
+#define FIXED_SIZE 20
 
 // PROCESS
 
@@ -17,6 +17,7 @@ typedef struct process{
 	int blocked;
 	int added_waiting;
 	int first_exec;
+	int current_exec;
 	int finished;
 	int* events;
 }Process;
@@ -32,11 +33,24 @@ Process* new_process(int pid, int priority, int arrival, int event_length, int* 
 	al -> selected = 0;
 	al -> blocked = 0;
 	al -> added_waiting = 0;
+	al -> current_exec = 0;
 	al -> finished = -1;
 	al -> first_exec = -1;
 	strcpy(al -> name, name);
 	strcpy(al -> status, "UNBORN");
 	return al;
+}
+
+int get_diserved_quantum(Process* process, int quantum){
+	int x = process -> priority;
+	float y;
+	if (x <= 32){
+		y = x*(0.5/31) + (15/31);
+	} else {
+		y = x*(1/32);
+	}
+	// printf("DESERVED_QUANTUM %f %i\n", y*quantum, (int)y*quantum);
+	return (int)y*quantum;
 }
 
 void print_statistics(Process* process){
@@ -228,14 +242,13 @@ int main(int argc, char *argv[]){
 		else {
 			quantum = 3;
 		}
-
-
-
+		printf("el quantum es %i", quantum);
+		int nada;
+		scanf("%i",&nada);
 		// Process array
 		int current_pid = 0;
 		int current_size = FIXED_SIZE;
 		Process** processes_read = malloc(sizeof(Process*)*current_size);
-
 		// Load processes
 		FILE* fr = fopen(argv[2], "r");
 		char* name = malloc(sizeof(char)*257);
@@ -263,23 +276,16 @@ int main(int argc, char *argv[]){
 			current_pid += 1;
 		}
 		free(name);
+
+
+
 		int total_processes = current_pid;
-		// para tener un lugar d facil acceso a los waiting pa revisar si van a volver facilmente
 
+		for(int i=0;i<total_processes;i++){
+			printf("AGH :%i >", processes_read[i]->priority);
+		}
 
-		// Process** waiting_processes = malloc(sizeof(Process*)*total_processes);
-		// int waiting_length = 0;
-
-
-		// if (feof(fr)){
-		// 	printf("File ended\n");
-		// }
-		// else {
-		// 	printf("Some error \n");
-		// }
-		// printf("%s %i %i %i\n", name, priority, arrival, event_length);
-		// Check Expected Scheduler
-
+		scanf("%i", &nada);
 		int current_time = 0;
 		int done = 0;
 		int finished_processes;
@@ -289,9 +295,7 @@ int main(int argc, char *argv[]){
 			// revisamos si llega un proceso
 			for(int i=0;i<total_processes;i++){
 				if (current_time == processes_read[i] -> arrival){
-					see_queue(ready_queue);
 					Enqueue(processes_read[i], ready_queue);
-					see_queue(ready_queue);
 					printf("Proceso %i ha sido creado y ha entrado a la cola ready con estado READY  | t = %i\n", processes_read[i] -> pid, current_time);
 				}
 			}
@@ -301,9 +305,7 @@ int main(int argc, char *argv[]){
 					// los procesos que estan waiting
 					if (processes_read[i] -> events[processes_read[i] -> counter] == 0){
 						processes_read[i] -> counter += 1;
-						see_queue(ready_queue);
 						Enqueue(processes_read[i], ready_queue);
-						see_queue(ready_queue);
 						strcpy(processes_read[i] -> status, "READY");
 						printf("Proceso %i ha dejado de esperar y ha entrado a la cola ready (WAITING -> READY)| t = %i\n", processes_read[i] -> pid, current_time);
 					}
@@ -325,8 +327,22 @@ int main(int argc, char *argv[]){
 					else{
 						is_running -> blocked += 1;
 						is_running -> counter += 1;
+						is_running -> current_exec = 0;
 						strcpy(is_running -> status, "WAITING");
 						printf("Proceso %i se ha bloqueado (RUNNING -> WAITING) | t = %i\n", is_running -> pid, current_time);
+						is_running = NULL;
+					}
+				} else if (strcmp(argv[1],"roundrobin") == 0){
+					// revisamos si hay que quitar al proceso de la cpu en rr
+					if (is_running -> current_exec == get_diserved_quantum(is_running, quantum)){
+						is_running -> current_exec = 0;
+						// !!! IMPORTANTE !!!
+						// aca hay que confirmar que cuando el scheduler se apropia de la cpu no es considerado un "bloqueo"
+						// is_running -> blocked += 1;
+						// !!! END IMPORTANTE !!!
+						strcpy(is_running -> status, "READY");
+						Enqueue(is_running, ready_queue);
+						printf("Proceso %i ha agotado el quantum y vuelve a cola ready (RUNNING -> READY) | t = %i\n", is_running -> pid, current_time);
 						is_running = NULL;
 					}
 				}
@@ -337,60 +353,49 @@ int main(int argc, char *argv[]){
 				// no hay ningun proceso corriendo
 				if(isQEmpty(ready_queue)){
 					// no hay procesos esperando la cpu
-
 				}
 				else{
 					// hay procesos en cola ready
-					if (strcmp(argv[1],"fcfs") == 0){
+					// seleccionamos segun tipo de scheduler
+					if (strcmp(argv[1],"fcfs") == 0 || strcmp(argv[1],"roundrobin") == 0){
 						is_running = Dequeue(ready_queue);
-						// actualizar stats
-						is_running -> selected += 1;
-						if (is_running -> first_exec == -1){
-							is_running -> first_exec = current_time;
-						}
-						strcpy(is_running -> status, "RUNNING");
-						printf("Scheduler ha asignado la CPU al proceso %i (READY -> RUNNING)| t = %i\n", is_running -> pid, current_time);
-						int total_bursts = (is_running -> event_length + 1)/2;
-						int completed_bursts = is_running -> selected - 1;
-						printf(
-							"El proceso ya ha ejecutado %i intervalos de tiempo completos, y le faltan %i incluyendo el que acaba de comenzar\n",
-							completed_bursts, total_bursts - completed_bursts);
-					} else if (strcmp(argv[1],"roundrobin") == 0){
-
 					} else if (strcmp(argv[1],"random") == 0){
 						int index_selected = rand() % ready_queue -> length;
-						printf("index_selected : %i", index_selected);
-						see_queue(ready_queue);
 						is_running = Dequeue_index(ready_queue, index_selected);
-						see_queue(ready_queue);
-						is_running -> selected += 1;
-						if (is_running -> first_exec == -1){
-							is_running -> first_exec = current_time;
-						}
-						strcpy(is_running -> status, "RUNNING");
-						printf("Scheduler ha asignado la CPU al proceso %i (READY -> RUNNING)| t = %i\n", is_running -> pid, current_time);
-						int total_bursts = (is_running -> event_length + 1)/2;
-						int completed_bursts = is_running -> selected - 1;
-						printf(
-							"El proceso ya ha ejecutado %i intervalos de tiempo completos,y le faltan %i incluyendo el que acaba de comenzar\n",
-							completed_bursts, total_bursts - completed_bursts);
 					}
 					else {
 						printf("\t<scheduler> debe ser 'fcfs', 'roundrobin' o 'random'\n");
 						return 1;
 					}
+					is_running -> selected += 1;
+					if (is_running -> first_exec == -1){
+						is_running -> first_exec = current_time;
+					}
+					strcpy(is_running -> status, "RUNNING");
+					printf("Scheduler ha asignado la CPU al proceso %i (READY -> RUNNING)| t = %i\n", is_running -> pid, current_time);
+					int total_bursts = (is_running -> event_length + 1)/2;
+					int completed_bursts = is_running -> counter/2;
+					printf(
+						"El proceso ya ha ejecutado %i intervalos de tiempo completos, y le faltan %i incluyendo el que acaba de comenzar\n",
+						completed_bursts, total_bursts - completed_bursts);
 				}
 			}
 
 			// hacemos avanzar el tiempo
 			for(int i=0;i<total_processes;i++){
 				if (strcmp(processes_read[i] -> status, "WAITING") == 0){
+					// !!! IMPORTANTE !!!
+					// aca hay que confirmar si waiting time incluye el tiempo en estado WAITING
+					// processes_read[i] -> added_waiting += 1;
+					/// !!! END IMPORTANTE !!!
 					processes_read[i] -> events[processes_read[i] -> counter] -= 1;
-					processes_read[i] -> added_waiting += 1;
 				} else if (strcmp(processes_read[i] -> status, "READY") == 0){
 					processes_read[i] -> added_waiting += 1;
 				} else if (strcmp(processes_read[i] -> status, "RUNNING") == 0){
 					processes_read[i] -> events[processes_read[i] -> counter] -= 1;
+					if (strcmp(argv[1],"random") == 0){
+						processes_read[i] -> current_exec += 1;
+					}
 				}
 			}
 
@@ -407,7 +412,6 @@ int main(int argc, char *argv[]){
 			}
 			// avanzamos el tiempo
 			current_time += 1;
-			// printf("time: %i\n", current_time);
 		}
 
 		printf("Se ha terminado la simulación, con %i procesos terminados y tiempo %i\n", finished_processes, current_time-1);
