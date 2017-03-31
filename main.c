@@ -42,15 +42,18 @@ Process* new_process(int pid, int priority, int arrival, int event_length, int* 
 }
 
 int get_diserved_quantum(Process* process, int quantum){
-	int x = process -> priority;
+	// !!! IMPORTANTE !!!
+	// hay que revisar aca pq los floats /ints se comportan medio raro
+	// !!! END IMPORTANTE !!!
+	float x = (float) process -> priority;
 	float y;
 	if (x <= 32){
-		y = x*(0.5/31) + (15/31);
+		y = (x/62) + (15/31);
 	} else {
-		y = x*(1/32);
+		y = x/32;
 	}
-	// printf("DESERVED_QUANTUM %f %i\n", y*quantum, (int)y*quantum);
-	return (int)y*quantum;
+	// printf(" y = %f DESERVED_QUANTUM %i\n", y, (int)(y*(float)quantum));
+	return (int)(y*(float)quantum);
 }
 
 void print_statistics(Process* process){
@@ -242,9 +245,6 @@ int main(int argc, char *argv[]){
 		else {
 			quantum = 3;
 		}
-		printf("el quantum es %i", quantum);
-		int nada;
-		scanf("%i",&nada);
 		// Process array
 		int current_pid = 0;
 		int current_size = FIXED_SIZE;
@@ -281,11 +281,14 @@ int main(int argc, char *argv[]){
 
 		int total_processes = current_pid;
 
-		for(int i=0;i<total_processes;i++){
-			printf("AGH :%i >", processes_read[i]->priority);
-		}
+		// for(int j=0;j<total_processes;j++){
+		// 	printf("AGH :%i >", processes_read[j]->priority);
+		// 	get_diserved_quantum(processes_read[j], quantum);
+		// }
+		// int nada;
+		// scanf("%i",&nada);
 
-		scanf("%i", &nada);
+
 		int current_time = 0;
 		int done = 0;
 		int finished_processes;
