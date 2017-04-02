@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 #define FIXED_SIZE 20
 
 // PROCESS
@@ -48,31 +50,32 @@ int get_diserved_quantum(Process* process, int quantum){
 	float x = (float) process -> priority;
 	float y;
 	if (x <= 32){
-		y = (x/62) + (15/31);
+		y = (x/62) + ((float)15/31);
 	} else {
 		y = x/32;
 	}
+	// printf("P%d, %d prio, %f x, %f y, %d qua\n", process -> pid, process -> priority, x, y, (int)(y*(float)quantum));
 	// printf(" y = %f DESERVED_QUANTUM %i\n", y, (int)(y*(float)quantum));
 	return (int)(y*(float)quantum);
 }
 
 void print_statistics(Process* process){
 	printf("Proceso %i : %s\n", process -> pid, process -> name);
-	printf("Elegido para usar la CPU: %i veces\n", process -> selected);
-	printf("Bloqueado: %i veces\n", process -> blocked);
+	printf("\tElegido para usar la CPU: %i veces\n", process -> selected);
+	printf("\tBloqueado: %i veces\n", process -> blocked);
 	if (process -> finished == -1){
-		printf("Turnaround time: --Proceso no terminado--\n");
+		printf("\tTurnaround time: --Proceso no terminado--\n");
 	}
 	else {
-		printf("Turnaround time: %i\n", process -> finished - process -> arrival);
+		printf("\tTurnaround time: %i\n", process -> finished - process -> arrival);
 	}
 	if (process -> first_exec == -1){
-		printf("Response time: --Proceso no alcanzó a ejecutarse--\n");
+		printf("\tResponse time: --Proceso no alcanzó a ejecutarse--\n");
 	}
 	else {
-		printf("Response time: %i\n", process -> first_exec - process -> arrival);
+		printf("\tResponse time: %i\n", process -> first_exec - process -> arrival);
 	}
-	printf("Waiting time: %i\n", process -> added_waiting);
+	printf("\tWaiting time: %i\n", process -> added_waiting);
 }
 
 void free_process(Process* process){
@@ -228,7 +231,18 @@ void see_queue(Queue* queue){
 
 // END QUEUE
 
+// SIGNAL HANDLER
+void handler(int nada){
+	// for (int i=0;i<total_processes;i++){
+	// 	print_statistics(processes_read[i]);
+	// 	free_process(processes_read[i]);
+	// }
+	exit(0);
+}
+// END SIGNAL HANDLER
+
 int main(int argc, char *argv[]){
+	signal(SIGINT, handler);
 	if ((argc != 3) && (argc != 4)){
 		printf("Modo de uso: %s <scheduler> <file> <quantum>\n", argv[0]);
 		printf("\t<scheduler> es puede ser 'fcfs', 'roundrobin' o 'random'\n");
@@ -295,6 +309,8 @@ int main(int argc, char *argv[]){
 		Queue* ready_queue = queue_init();
 		Process* is_running = NULL;
 		while(!done){
+			// sleep para que el ctrl+c se pueda usar
+			usleep(1E3);
 			// revisamos si llega un proceso
 			for(int i=0;i<total_processes;i++){
 				if (current_time == processes_read[i] -> arrival){
@@ -341,7 +357,7 @@ int main(int argc, char *argv[]){
 						is_running -> current_exec = 0;
 						// !!! IMPORTANTE !!!
 						// aca hay que confirmar que cuando el scheduler se apropia de la cpu no es considerado un "bloqueo"
-						// is_running -> blocked += 1;
+						is_running -> blocked += 1;
 						// !!! END IMPORTANTE !!!
 						strcpy(is_running -> status, "READY");
 						Enqueue(is_running, ready_queue);
@@ -389,7 +405,7 @@ int main(int argc, char *argv[]){
 				if (strcmp(processes_read[i] -> status, "WAITING") == 0){
 					// !!! IMPORTANTE !!!
 					// aca hay que confirmar si waiting time incluye el tiempo en estado WAITING
-					// processes_read[i] -> added_waiting += 1;
+					processes_read[i] -> added_waiting += 1;
 					/// !!! END IMPORTANTE !!!
 					processes_read[i] -> events[processes_read[i] -> counter] -= 1;
 				} else if (strcmp(processes_read[i] -> status, "READY") == 0){
@@ -411,7 +427,7 @@ int main(int argc, char *argv[]){
 				}
 				else {
 					finished_processes++;
-				}	
+				}
 			}
 			// avanzamos el tiempo
 			current_time += 1;
