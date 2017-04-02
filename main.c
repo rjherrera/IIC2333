@@ -51,10 +51,10 @@ int get_diserved_quantum(Process* process, int quantum){
 	float y;
 	if (x <= 32){
 		y = (x/62) + ((float)15/31);
-	} else {
+	}
+	else {
 		y = x/32;
 	}
-	// printf("P%d, %d prio, %f x, %f y, %d qua\n", process -> pid, process -> priority, x, y, (int)(y*(float)quantum));
 	// printf(" y = %f DESERVED_QUANTUM %i\n", y, (int)(y*(float)quantum));
 	return (int)(y*(float)quantum);
 }
@@ -231,13 +231,21 @@ void see_queue(Queue* queue){
 
 // END QUEUE
 
+// GlOBALES
+    // Defini variables globales para poder acceder a ellas desde el handler
+int total_processes;
+Process** processes_read;
+// END GLOABLES
+
+
 // SIGNAL HANDLER
-void handler(int nada){
-	// for (int i=0;i<total_processes;i++){
-	// 	print_statistics(processes_read[i]);
-	// 	free_process(processes_read[i]);
-	// }
-	exit(0);
+void handler(int foo){
+    printf("Se interrumpió el scheduler.\n");
+    for (int i=0;i<total_processes;i++){
+        print_statistics(processes_read[i]);
+        free_process(processes_read[i]);
+    }
+    exit(0);
 }
 // END SIGNAL HANDLER
 
@@ -262,7 +270,7 @@ int main(int argc, char *argv[]){
 		// Process array
 		int current_pid = 0;
 		int current_size = FIXED_SIZE;
-		Process** processes_read = malloc(sizeof(Process*)*current_size);
+		processes_read = malloc(sizeof(Process*)*current_size);
 		// Load processes
 		FILE* fr = fopen(argv[2], "r");
 		char* name = malloc(sizeof(char)*257);
@@ -293,7 +301,7 @@ int main(int argc, char *argv[]){
 
 
 
-		int total_processes = current_pid;
+		total_processes = current_pid;
 
 		// for(int j=0;j<total_processes;j++){
 		// 	printf("AGH :%i >", processes_read[j]->priority);
@@ -357,7 +365,7 @@ int main(int argc, char *argv[]){
 						is_running -> current_exec = 0;
 						// !!! IMPORTANTE !!!
 						// aca hay que confirmar que cuando el scheduler se apropia de la cpu no es considerado un "bloqueo"
-						is_running -> blocked += 1;
+						// is_running -> blocked += 1;
 						// !!! END IMPORTANTE !!!
 						strcpy(is_running -> status, "READY");
 						Enqueue(is_running, ready_queue);
