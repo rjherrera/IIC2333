@@ -1,3 +1,7 @@
+## Tarea 0
+Raimundo Pérez 14631997
+Raimundo Herrera 14632152
+
 ### Consideraciones
 
 #### Tiempo de simulación
