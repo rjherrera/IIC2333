@@ -1,8 +1,10 @@
 ## Tarea 0
-Raimundo Pérez 14631997
+Raimundo Pérez 14631997  
 Raimundo Herrera 14632152
 
 ### Consideraciones
+
+La simulación se corre dentro de un while, se maneja la señal del Ctrl + C, además de utilizarse los structs necesarios. El flujo considera las acciones comunes a todos los schedulers y aquellas distintas para ahorrar código y permitir un mayor orden. Algunos comentarios permiten la mejor lectura del programa.
 
 #### Tiempo de simulación
 Para poder probar el funcionamiento de hacer Ctrl + C, lo que se implementó fue el uso de la función usleep la cual recibe como único argumento la cantidad de microsegundos a esperar. Por defecto se esperan 1E3 microsegundos, para alcanzar a hacer Ctrl + C pero no retardar excesivamente la ejecución del programa. Esta cantidad está definida como una constante al inicio del programa.
