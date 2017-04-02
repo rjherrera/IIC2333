@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <unistd.h>
 #define FIXED_SIZE 20
+#define SIM_TIME 1E3
 
 // PROCESS
 
@@ -50,7 +51,7 @@ int get_diserved_quantum(Process* process, int quantum){
 	float x = (float) process -> priority;
 	float y;
 	if (x <= 32){
-		y = (x/62) + ((float)15/31);
+		y = (x/62) + (15/31);
 	}
 	else {
 		y = x/32;
@@ -318,7 +319,7 @@ int main(int argc, char *argv[]){
 		Process* is_running = NULL;
 		while(!done){
 			// sleep para que el ctrl+c se pueda usar
-			usleep(1E3);
+			usleep(SIM_TIME);
 			// revisamos si llega un proceso
 			for(int i=0;i<total_processes;i++){
 				if (current_time == processes_read[i] -> arrival){
