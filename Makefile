@@ -1,2 +1,2 @@
 all:
-	@gcc -std=gnu11 -o simulator main.c
+	@gcc -std=gnu11 -o lifegame lifegame.c
