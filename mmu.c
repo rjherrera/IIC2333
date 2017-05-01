@@ -41,7 +41,7 @@ PTE* pte_init(){
 }
 
 typedef struct physical_memory_word{
-	char* info;
+	unsigned char info[256];
 	int being_used;
 	int last_accessed;
 	unsigned int used_by;
@@ -49,7 +49,7 @@ typedef struct physical_memory_word{
 
 MEMORYWORD* memword_init(){
 	MEMORYWORD* al = malloc(sizeof(MEMORYWORD));
-	al -> info = malloc(256);
+	// al -> info = malloc(256);
 	al -> being_used = 0;
 	al -> last_accessed = 0;
 	al -> used_by = 0;
@@ -171,9 +171,11 @@ unsigned int request_frame(MEMORYWORD** physical_memory, PTE** page_table, unsig
 int tlb_hits_counter = 0;
 int page_faults_counter = 0;
 int current_time = 0;
+FILE *data_bin;
 
 
 void handler(int foo){
+	fclose(data_bin);
 	printf("\nHit Rate: %f %%  Page-Fault: %f %%\n", ((float)(tlb_hits_counter*100))/((float)current_time), ((float)(page_faults_counter*100))/((float)current_time));
     exit(0);
 }
@@ -181,6 +183,9 @@ void handler(int foo){
 int main(int argc, char** argv)
 {
 	signal(SIGINT, handler);
+
+	data_bin = fopen("data.bin", "rb");
+
 	TLBE** tlb = malloc(sizeof(TLBE*)*32);
 	for (int tlbe = 0; tlbe < 32; ++tlbe)
 	{
@@ -203,6 +208,8 @@ int main(int argc, char** argv)
 
 	unsigned int frame_to_lookup;
 
+	unsigned int value;
+
 	printf("%lu \n",sizeof(vir_mem_requested));
 	while(1){
 		// printf("Enter Virtual Direction\n");
@@ -212,11 +219,14 @@ int main(int argc, char** argv)
 		page = (vir_mem_requested & 0xFF00) >> 8;
 
 		frame_to_lookup = lookup_tlbe(tlb, page, current_time);
+		printf("VirMem: %d, Page:%d, Offset:%d\n", vir_mem_requested, page, offset);
 
 		if (frame_to_lookup != ERROR_CODE)
 		{
 			// HIT! frame_to_lookup will have corresponding frame
 			tlb_hits_counter++;
+			printf("  Hit!\n");
+			value = physical_memory[frame_to_lookup] -> info[offset];
 		}
 		else
 		{
@@ -227,24 +237,36 @@ int main(int argc, char** argv)
 				if (page_table[page]->present_bit)
 				{
 					// it is NOT on disk
-					request_and_set_tlbe(tlb, page, page_table[page]->frame_assigned, current_time);
 					frame_to_lookup = page_table[page]->frame_assigned;
+					request_and_set_tlbe(tlb, page, page_table[page]->frame_assigned, current_time);
+					printf("  Miss!\n");
+					value = physical_memory[frame_to_lookup] -> info[offset];
 				}
 				else
 				{
-					// ESTO FALTA (1)
+					// ESTO YA NO FALTA (1)
 
 					// frame was asigned, but it WAS on DISK
 					// aqui no cacho bien la parte del data.bin pero creo q habria que leerlo y
 					// escribirlo en la parte info del mem_word del frame correspondiente?
 
-					// END ESTO FALTA (1)
+					// END ESTO YA NO FALTA (1)
 
 					// PAGE FAULT
 					page_faults_counter++;
+					printf("  Page Fault (GOTO DISK)\n");
 
 					// search for a frame to assign to this page
 					frame_to_lookup = request_frame(physical_memory, page_table, page, current_time);
+
+					//
+					// look for frame in databin and update value of physical memory frame
+					unsigned char buffer[256];
+					fseek(data_bin, page * 256, SEEK_SET);
+					fread(buffer, sizeof(buffer), 1, data_bin);
+					for (int i = 0; i < 256; ++i) physical_memory[frame_to_lookup] -> info[i] = buffer[i];
+					value = physical_memory[frame_to_lookup] -> info[offset];
+
 					// update PTE
 					page_table[page]->frame_assigned = frame_to_lookup;
 					page_table[page]->present_bit = 1;
@@ -256,11 +278,21 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-				// PAGE FAULT    ¿¿verdad??
+				// PAGE FAULT SIP
 				page_faults_counter++;
+				printf("  Page Fault (LOAD)\n");
 
 				// search for a frame to assign to this page
 				frame_to_lookup = request_frame(physical_memory, page_table, page, current_time);
+
+				// look for frame in databin and update value of physical memory frame
+				unsigned char buffer[256];
+				fseek(data_bin, page * 256, SEEK_SET);
+				fread(buffer, sizeof(buffer), 1, data_bin);
+				for (int i = 0; i < 256; ++i) physical_memory[frame_to_lookup] -> info[i] = buffer[i];
+				//printf("%u\n", physical_memory[frame_to_lookup] -> info[offset]);
+				value = physical_memory[frame_to_lookup] -> info[offset];
+
 				// update PTE
 				page_table[page]->frame_assigned = frame_to_lookup;
 				page_table[page]->present_bit = 1;
@@ -287,7 +319,14 @@ int main(int argc, char** argv)
 
 		// END FOLLOWED STRUCTURE
 
-		// ESTO FALTA POR COMPLETO. (2)
+		printf("  Frame:%d\n", frame_to_lookup);
+		printf("  Value:%u\n", value);
+
+		// printf("%u\n", physical_memory[frame_to_lookup] -> info);
+
+
+
+		// ESTO YA NO FALTA, POR COMPLETO. :D (2)
 
 
 		// Once you have the frame, look in corresponding frame (and offset?) aqui depende de como sea la interaccion cn el data.bin
@@ -295,10 +334,10 @@ int main(int argc, char** argv)
 		// los bits de offset. se puede hacer con los operadores bitwise de C asi como en el principio
 		// nose como hacerlo con el data.bin pero algo asi como fseek("data.bin", frame_to_look_up) ??
 
-		// END ESTO FALTA POR COMPLETO (2)
+		// END ESTO YA NO FALTA, POR COMPLETO :D (2)
 
 
-		// ESTO TAMBIEN FALTA. (3)
+		// ESTO TAMBIEN YA NO FALTA. :D (3)
 
 		// falta la parte de imprimir el valor del byte correspondiente, (Creo que esto seria lo de reconstruir la direccion fisica final),
 		// es decir lo de juntar la pagina transformada a marco + offset.
@@ -308,7 +347,7 @@ int main(int argc, char** argv)
 		// nunca se printean los stats.. alomejor podria dejarse asi nomas y ponerle una SIGNAL ctrl-C como la de la tarea 1 pa salir del while
 		// y imprimir las stats
 
-		// END ESTO TAMBIEN FALTA. (3)
+		// END ESTO TAMBIEN YA NO FALTA. :D (3)
 
 		current_time ++;
 	}
@@ -330,8 +369,9 @@ int main(int argc, char** argv)
 
 	for (int memdir = 0; memdir < 128; ++memdir)
 	{
-		free(physical_memory[memdir]->info);
+		// free(physical_memory[memdir]->info);
 		free(physical_memory[memdir]);
 	}
 	free(physical_memory);
+	fclose(data_bin);
 }
