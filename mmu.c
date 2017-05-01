@@ -71,7 +71,7 @@ unsigned int lookup_tlbe(TLBE** tlb, unsigned int page_requested, int current_ti
 
 void request_and_set_tlbe(TLBE** tlb, unsigned int page, unsigned int frame_assigned, int current_time)
 {
-	// Searches for an empty space on tlb, 
+	// Searches for an empty space on tlb,
 	// if no empty space, then it searches for LRU tlbe, and sets the new tlbe
 	unsigned int direction;
 	int index;
@@ -161,17 +161,26 @@ unsigned int request_frame(MEMORYWORD** physical_memory, PTE** page_table, unsig
 
 /// NOTA GENERAL
 
-// Igual revisa el flow de lo que va pasando pq fijo se me paso algun detalle, o alguna actualizacion de tlbe o pte cuando 
+// Igual revisa el flow de lo que va pasando pq fijo se me paso algun detalle, o alguna actualizacion de tlbe o pte cuando
 // se hace un reemplazo por ejemplo, onda se me podria haber pasado algun valid o presence bit o used by esas weas..
-// lo he doublechecked caleta pero uno nunca sabe.. 
+// lo he doublechecked caleta pero uno nunca sabe..
 
 
 
 /// END NOTA GENERAL
+int tlb_hits_counter = 0;
+int page_faults_counter = 0;
+int current_time = 0;
+
+
+void handler(int foo){
+	printf("\nHit Rate: %f %%  Page-Fault: %f %%\n", ((float)(tlb_hits_counter*100))/((float)current_time), ((float)(page_faults_counter*100))/((float)current_time));
+    exit(0);
+}
 
 int main(int argc, char** argv)
 {
-
+	signal(SIGINT, handler);
 	TLBE** tlb = malloc(sizeof(TLBE*)*32);
 	for (int tlbe = 0; tlbe < 32; ++tlbe)
 	{
@@ -191,16 +200,14 @@ int main(int argc, char** argv)
 	}
 
 	unsigned int vir_mem_requested, offset, page;
-	int current_time = 0;
-	int tlb_hits_counter = 0;
-	int page_faults_counter = 0;
 
 	unsigned int frame_to_lookup;
 
 	printf("%lu \n",sizeof(vir_mem_requested));
 	while(1){
-		printf("Enter Virtual Direction\n");
-		scanf("%u", &vir_mem_requested);
+		// printf("Enter Virtual Direction\n");
+		int code = scanf("%u", &vir_mem_requested);
+		if (code == EOF) break;
 		offset = vir_mem_requested & 0x00FF;
 		page = (vir_mem_requested & 0xFF00) >> 8;
 
@@ -227,8 +234,8 @@ int main(int argc, char** argv)
 				{
 					// ESTO FALTA (1)
 
-					// frame was asigned, but it WAS on DISK 
-					// aqui no cacho bien la parte del data.bin pero creo q habria que leerlo y 
+					// frame was asigned, but it WAS on DISK
+					// aqui no cacho bien la parte del data.bin pero creo q habria que leerlo y
 					// escribirlo en la parte info del mem_word del frame correspondiente?
 
 					// END ESTO FALTA (1)
@@ -253,7 +260,7 @@ int main(int argc, char** argv)
 				page_faults_counter++;
 
 				// search for a frame to assign to this page
-				frame_to_lookup = request_frame(physical_memory, page_table, page, current_time);					
+				frame_to_lookup = request_frame(physical_memory, page_table, page, current_time);
 				// update PTE
 				page_table[page]->frame_assigned = frame_to_lookup;
 				page_table[page]->present_bit = 1;
@@ -306,7 +313,7 @@ int main(int argc, char** argv)
 		current_time ++;
 	}
 
-	printf("Hit Rate: %f%%  Page-Fault: %f%%\n", ((float)tlb_hits_counter)/((float)current_time), ((float)page_faults_counter)/((float)current_time));
+	printf("Hit Rate: %f %%  Page-Fault: %f %%\n", ((float)(tlb_hits_counter*100))/((float)current_time), ((float)(page_faults_counter*100))/((float)current_time));
 
 
 	for (int tlbe = 0; tlbe < 32; ++tlbe)
