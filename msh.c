@@ -52,7 +52,8 @@ void handler(int foo){
 }
 
 
-void msh_loop() {
+void main_loop() {
+    // bool pipe = false;
     signal(SIGINT, handler);
     char *input = NULL;
     size_t buffer_size = 0;
@@ -84,6 +85,29 @@ void msh_loop() {
             tok = strtok(NULL, " \n");
         }
         tokens[i] = NULL;
+
+        // progresos para el bonus (la idea era leer del stdout y hacer fork, cuando hubiera pipe)
+        // int j;
+        // for (j = 0; j < i - 1; ++j) {
+        //     if (!strcmp(tokens[j], "|")){
+        //         pipe = true;
+        //         break;
+        //     }
+        // }
+
+        // if (pipe) {
+        //     char **comando1 = malloc((j) * sizeof(char*));
+        //     char **comando2 = malloc((i - j) * sizeof(char*));
+        //     for (int k = 0; k < j + 1; ++k){
+        //         comando1[k] = tokens[k];
+        //     }
+        //     for (int k = j + 1; k < i; ++k)
+        //     {
+        //         comando2[k] = tokens[k];
+        //     }
+        //     printf("%s\n", comando2[i-1]);
+        //     printf("%s\n", comando1[j-1]);
+        // }
 
         // si el comando es setprompt se cambia el prompt segun las condiciones
         if (!strcmp(tokens[0], "setPrompt")) {
@@ -129,7 +153,7 @@ void msh_loop() {
 
 int main(int argc, char** argv) {
 
-    msh_loop();
+    main_loop();
 
     return 0;
 }

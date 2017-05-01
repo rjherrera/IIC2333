@@ -176,7 +176,7 @@ FILE *data_bin;
 
 void handler(int foo){
 	fclose(data_bin);
-	printf("\nHit Rate: %f %%  Page-Fault: %f %%\n", ((float)(tlb_hits_counter*100))/((float)current_time), ((float)(page_faults_counter*100))/((float)current_time));
+	printf("Hit Rate: %f %%  Page-Fault Rate: %f %%\n", ((float)(tlb_hits_counter*100))/((float)current_time), ((float)(page_faults_counter*100))/((float)current_time));
     exit(0);
 }
 
@@ -210,7 +210,7 @@ int main(int argc, char** argv)
 
 	unsigned int value;
 
-	printf("%lu \n",sizeof(vir_mem_requested));
+	// printf("%lu \n",sizeof(vir_mem_requested));
 	while(1){
 		// printf("Enter Virtual Direction\n");
 		int code = scanf("%u", &vir_mem_requested);
@@ -219,13 +219,13 @@ int main(int argc, char** argv)
 		page = (vir_mem_requested & 0xFF00) >> 8;
 
 		frame_to_lookup = lookup_tlbe(tlb, page, current_time);
-		printf("VirMem: %d, Page:%d, Offset:%d\n", vir_mem_requested, page, offset);
+		// printf("VirMem: %d, Page:%d, Offset:%d\n", vir_mem_requested, page, offset);
 
 		if (frame_to_lookup != ERROR_CODE)
 		{
 			// HIT! frame_to_lookup will have corresponding frame
 			tlb_hits_counter++;
-			printf("  Hit!\n");
+			// printf("  Hit!\n");
 			value = physical_memory[frame_to_lookup] -> info[offset];
 		}
 		else
@@ -239,7 +239,7 @@ int main(int argc, char** argv)
 					// it is NOT on disk
 					frame_to_lookup = page_table[page]->frame_assigned;
 					request_and_set_tlbe(tlb, page, page_table[page]->frame_assigned, current_time);
-					printf("  Miss!\n");
+					// printf("  Miss!\n");
 					value = physical_memory[frame_to_lookup] -> info[offset];
 				}
 				else
@@ -254,7 +254,7 @@ int main(int argc, char** argv)
 
 					// PAGE FAULT
 					page_faults_counter++;
-					printf("  Page Fault (GOTO DISK)\n");
+					// printf("  Page Fault (GOTO DISK)\n");
 
 					// search for a frame to assign to this page
 					frame_to_lookup = request_frame(physical_memory, page_table, page, current_time);
@@ -280,7 +280,7 @@ int main(int argc, char** argv)
 			{
 				// PAGE FAULT SIP
 				page_faults_counter++;
-				printf("  Page Fault (LOAD)\n");
+				// printf("  Page Fault (LOAD)\n");
 
 				// search for a frame to assign to this page
 				frame_to_lookup = request_frame(physical_memory, page_table, page, current_time);
@@ -319,8 +319,9 @@ int main(int argc, char** argv)
 
 		// END FOLLOWED STRUCTURE
 
-		printf("  Frame:%d\n", frame_to_lookup);
-		printf("  Value:%u\n", value);
+		// printf("  Frame:%d\n", frame_to_lookup);
+		// printf("  Value:%u\n", value);
+		printf("%u\n", value);
 
 		// printf("%u\n", physical_memory[frame_to_lookup] -> info);
 
@@ -352,7 +353,7 @@ int main(int argc, char** argv)
 		current_time ++;
 	}
 
-	printf("Hit Rate: %f %%  Page-Fault: %f %%\n", ((float)(tlb_hits_counter*100))/((float)current_time), ((float)(page_faults_counter*100))/((float)current_time));
+	printf("Hit Rate: %f %%  Page-Fault Rate: %f %%\n", ((float)(tlb_hits_counter*100))/((float)current_time), ((float)(page_faults_counter*100))/((float)current_time));
 
 
 	for (int tlbe = 0; tlbe < 32; ++tlbe)
