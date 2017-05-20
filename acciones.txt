@@ -1,0 +1,5 @@
+cd algunawea_De_directorio
+mkdir rutanose/algocomoque/wuh_que_cosa
+mkdir nombreequis
+mkdir rutanose/algocomoque/wuh_que_cosa/equisde
+aver solo para testiar ruta/....
