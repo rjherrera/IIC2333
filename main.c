@@ -13,6 +13,11 @@
 #define IS_DIRECTORY 8
 #define IS_CONTENT 16
 
+#define DISK_SIZE 1048576
+
+
+
+
 typedef struct archivo
 {
     char* name;
@@ -20,21 +25,31 @@ typedef struct archivo
     uint32_t memory_used;
 } MyFile;
 
+MyFile* init_file(char* name, uint32_t assigned_disk_block)
+{
+    MyFile* al = malloc(sizeof(MyFile));
+    strcpy(al -> name, name);
+    al -> mem_dir = assigned_disk_block;
+    al -> memory_used = 4096;
+    return al;
+}
+
 typedef struct directory
 {
     char* absolute_path;
     char* name;
     struct directory** subdirs;
     MyFile** files;
+    int n_files;
 } Dir;
 
-char* first_part_path(char* full_path)
-{
-  int i;
-  i = strcspn (full_path,"/");
-   
+int file_is_in(char* file_name, Dir* dir){
+    for (int i = 0; i < dir->n_files; ++i)
+    {
+        if (!strcmp(dir -> files[i] -> name, file_name)) return i;
+    }
+    return -1;
 }
-
 
 uint32_t get_metadata(uint32_t block)
 {
@@ -55,6 +70,20 @@ char* select_random_root(int seed)
 {
 
 }
+
+int find_free_block(uint32_t* disk)
+{
+    for (uint32_t block = 0; block < DISK_SIZE; ++block)
+    {
+        uint32_t metadata = get_metadata(disk[block]);
+        if (metadata & FREE_BLOCK)
+        {
+            return block;
+        }
+    }
+}
+
+
 
 // void generate_new_instruction(int seed)
 // {
@@ -163,7 +192,7 @@ int main(int argc, char** argv)
 
     int steps = atoi(argv[1]);
 
-    uint32_t* simdisk = (uint32_t*) calloc(1048576, sizeof(uint32_t));
+    uint32_t* simdisk = (uint32_t*) calloc(DISK_SIZE, sizeof(uint32_t));
     if (acum_flags & DISK)
     {
         FILE* read_disk = fopen(disk, "rb");
@@ -171,6 +200,16 @@ int main(int argc, char** argv)
         fread(simdisk, 4, sizeof(simdisk),read_disk);
         fclose(read_disk);
     }
+    else
+    {
+        for (int block = 0; block < DISK_SIZE; ++block)
+        {
+            simdisk[block] |= FREE_BLOCK;
+        }
+    }
+
+
+
 
     if (acum_flags & ACTIONS)
     {
@@ -194,33 +233,66 @@ int main(int argc, char** argv)
             {
                 fscanf(action_file, "%s\n", buff);
 
+                Dir* new_directory = has_subdir(current_dir, buff);
 
+                if (new_directory)
+                {
+                    current_dir = new_directory;
+                }
+                else
+                {
+                    printf("La ruta relativa %s no existe. Instruccion ignorada. Directorio actual: %s\n", buff, current_dir->absolute_path);
+                }
             }
             else if (strcmp(key, "mkdir") == 0)
             {
                 fscanf(action_file, "%s\n", buff);
-                // char * strtok ( char * str, const char * delimiters );
-                char* path_piece = strtok(buff,"/");
-                if (path_piece == NULL)
+
+                char* new_dir_name = strrchr(buff, '/') + 1;
+
+                char* parent_directory_path = malloc(sizeof(char)*(new_dir_name-buff-1));
+                strncpy(parent_directory_path, buff, new_dir_name-buff-1);
+
+                Dir* parent_directory = has_subdir(current_dir, parent_directory_path);
+
+                if (parent_directory)
                 {
-                    printf("File name is just %s\n",buff);
-                }
-                char last[100];
-                while (path_piece != NULL)
-                {
-                    strcpy(last,path_piece);
-                    path_piece = strtok(NULL,"/");
-                    if (path_piece != NULL)
+                    if (is_in(new_dir_name, parent_directory) == -1)
                     {
-                        printf("This piece is %s\n", path_piece);
+                        Dir* new_dir = init_dir(buff,new_dir_name);
+                        insert_dir(parent_directory, new_dir);
+                    }
+                    else
+                    {
+                        printf("La ruta relativa %s ya contiene un directorio llamado %s. Instruccion ignorada.\n", parent_directory_path, current_dir->absolute_path);
                     }
                 }
-                printf("Dir made has name %s\n",last);
+                else
+                {
+                    printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+                }
 
             }
             else if (strcmp(key, "mkfile") == 0)
             {
+                fscanf(action_file, "%s\n", buff);
 
+                char* new_file_name = strrchr(buff, '/') + 1;
+
+                char* parent_directory_path = malloc(sizeof(char)*(new_file_name-buff-1));
+                strncpy(parent_directory_path, buff, new_file_name-buff-1);
+
+                Dir* parent_directory = has_subdir(current_dir, parent_directory_path);
+
+                if (parent_directory)
+                {
+                    MyFile* new_file = init_file(buff,new_file_name);
+                    insert_file(parent_directory, new_file);
+                }
+                else
+                {
+                    printf("La ruta relativa %s no existe. Instruccion ignorada. Directorio actual: %s\n", parent_directory_path, current_dir->absolute_path);
+                }
 
             }
             else if (strcmp(key, "mv") == 0)
@@ -253,7 +325,7 @@ int main(int argc, char** argv)
             // {
             //     printf("With this Argument %s \n",buff);
             // }
-            executed_instructions++;
+            // executed_instructions++;
         }
 
 
