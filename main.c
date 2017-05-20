@@ -2,18 +2,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define SEED 1
 #define ACTIONS 2
 #define UNTILL 4
 #define DISK 8
 
+#define FREE_BLOCK 4
+#define IS_DIRECTORY 8
+#define IS_CONTENT 16
 
 typedef struct archivo
 {
     char* name;
-    char subdirs;
-    int memory_used;
+    uint32_t mem_dir;
+    uint32_t memory_used;
 } MyFile;
 
 typedef struct directory
@@ -24,7 +28,28 @@ typedef struct directory
     MyFile** files;
 } Dir;
 
+char* first_part_path(char* full_path)
+{
+  int i;
+  i = strcspn (full_path,"/");
+   
+}
 
+
+uint32_t get_metadata(uint32_t block)
+{
+    return (block & ((1 << 8)-1));
+}
+
+uint32_t get_pointer(uint32_t block)
+{
+    return (block & (((1 << 31)-1) << 8))>>8;
+}
+
+uint32_t remake_block(uint32_t metadata, uint32_t pointer)
+{
+    return (pointer << 8) | metadata;
+}
 
 char* select_random_root(int seed)
 {
@@ -138,15 +163,14 @@ int main(int argc, char** argv)
 
     int steps = atoi(argv[1]);
 
+    uint32_t* simdisk = (uint32_t*) calloc(1048576, sizeof(uint32_t));
     if (acum_flags & DISK)
     {
-        // load disk
+        FILE* read_disk = fopen(disk, "rb");
+        // fseek(read_disk, 0, SEEK_SET);
+        fread(simdisk, 4, sizeof(simdisk),read_disk);
+        fclose(read_disk);
     }
-    else
-    {
-        // create_disk
-    }
-
 
     if (acum_flags & ACTIONS)
     {
@@ -162,12 +186,14 @@ int main(int argc, char** argv)
         char buff[200];
         
         // while (fgets (buff, 200, action_file) != NULL)
-        int executed_instructions = 0;
-        while (executed_instructions < steps && fscanf(action_file, "%s\n", key) == 1)
+        // int executed_instructions = 0;
+        // while (executed_instructions < steps && fscanf(action_file, "%s\n", key) == 1)
+        while (fscanf(action_file, "%s\n", key) == 1)
         {
             if (strcmp(key, "cd") == 0)
             {
                 fscanf(action_file, "%s\n", buff);
+
 
             }
             else if (strcmp(key, "mkdir") == 0)
@@ -194,16 +220,29 @@ int main(int argc, char** argv)
             }
             else if (strcmp(key, "mkfile") == 0)
             {
-                
+
+
             }
             else if (strcmp(key, "mv") == 0)
             {
-                
+
+
             }
             else if (strcmp(key, "rm") == 0)
             {
-                
+
+
             }
+            else if (strcmp(key, "ad") == 0)
+            {
+
+
+            }
+            else if (strcmp(key, "rd") == 0)
+            {
+
+
+            }                        
             else
             {
                 printf("%s is not a valid instruction. Ignored.\n", key);
