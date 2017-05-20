@@ -10,6 +10,7 @@ int main(int argc, char** argv)
     // Dir* otro_dir2 = init_dir("base_dir/chao", "chao",0);
     // Dir* otro_dir1a = init_dir("base_dir/hola/wena", "wena",0);
     current_dir = init_dir("base_dir", 0);
+    current_dir -> absolute_path = "base_dir/";
     Dir* otro_dir1 = init_dir("hola", 0);
     Dir* otro_dir2 = init_dir("chao", 0);
     Dir* otro_dir1a = init_dir("wena", 0);

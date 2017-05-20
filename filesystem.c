@@ -66,7 +66,13 @@ Dir* init_dir(char* name, uint32_t assigned_disk_block){
 
 void set_parent(Dir* dir, Dir* parent_dir)
 {
+    // SETS PARENT AND NEW ABSOLUTE_PATH
+    // abs_path always ends with /
     dir -> parent_dir = parent_dir;
+    dir -> absolute_path = malloc(sizeof(char) * (strlen(parent_dir -> absolute_path) + strlen(dir -> name) + 2));
+    strcpy(dir -> absolute_path, parent_dir -> absolute_path);
+    strcat(dir -> absolute_path, dir -> name);
+    strcat(dir -> absolute_path, "/");    
 }
 
 void insert_dir(Dir* dir, Dir* subdir){
@@ -76,11 +82,6 @@ void insert_dir(Dir* dir, Dir* subdir){
     dir -> subdirs[dir -> n_subdirs] = subdir;
     // Set parent and absolute_path
     set_parent(subdir, dir);
-    char abs_path[strlen(dir->absolute_path)+ strlen(subdir->name)];
-    subdir -> absolute_path = malloc(sizeof(char) * (strlen(dir -> absolute_path) + strlen(subdir -> name) + 1));
-    strcpy(subdir -> absolute_path, dir -> absolute_path);
-    strcat(subdir -> absolute_path, subdir -> name);
-
     dir -> n_subdirs++;
 }
 
