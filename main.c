@@ -4,30 +4,23 @@ Dir* current_dir;
 
 int main(int argc, char** argv)
 {
-    // inicializacion
-    // current_dir = init_dir("base_dir", "base_dir",0);
-    // Dir* otro_dir1 = init_dir("base_dir/hola", "hola",0);
-    // Dir* otro_dir2 = init_dir("base_dir/chao", "chao",0);
-    // Dir* otro_dir1a = init_dir("base_dir/hola/wena", "wena",0);
-    current_dir = init_dir("base_dir", 0);
-    current_dir -> absolute_path = "base_dir/";
-    Dir* otro_dir1 = init_dir("hola", 0);
-    Dir* otro_dir2 = init_dir("chao", 0);
-    Dir* otro_dir1a = init_dir("wena", 0);
+    // Dir* otro_dir1 = init_dir("hola", 1);
+    // Dir* otro_dir2 = init_dir("chao", 2);
+    // Dir* otro_dir1a = init_dir("wena", 3);
 
-    // test methods
-    insert_dir(current_dir, otro_dir1);
-    insert_dir(current_dir, otro_dir2);
-    insert_dir(otro_dir1, otro_dir1a);
-    char b[10] = "hola/wena";
+    // // test methods
+    // insert_dir(current_dir, otro_dir1);
+    // insert_dir(current_dir, otro_dir2);
+    // insert_dir(otro_dir1, otro_dir1a);
+    // char b[10] = "hola/wena";
 
-    // b debería estar en current dir (se guarda en a el puntero)
-    Dir* a = has_subdir(current_dir, b);
-    printf("Quedé en: %s\n", a -> name);
-    char d[8] = "hola/uu";
-    Dir* c = has_subdir(current_dir, d);
-    // d no deberia estar en current dir (se guarda en c el NULL)
-    if (c == NULL) printf("NULL\n");
+    // // b debería estar en current dir (se guarda en a el puntero)
+    // Dir* a = has_subdir(current_dir, b);
+    // printf("Quedé en: %s\n", a -> name);
+    // char d[8] = "hola/uu";
+    // Dir* c = has_subdir(current_dir, d);
+    // // d no deberia estar en current dir (se guarda en c el NULL)
+    // if (c == NULL) printf("NULL\n");
 
     int acum_flags = 0;
 
@@ -124,6 +117,9 @@ int main(int argc, char** argv)
 
     int steps = atoi(argv[1]);
 
+    FILE *accesses = fopen("accesos.txt", "w");
+    int current_line_accesses = 0;
+
     uint32_t* simdisk = (uint32_t*) calloc(DISK_SIZE, sizeof(uint32_t));
     if (acum_flags & DISK)
     {
@@ -140,8 +136,23 @@ int main(int argc, char** argv)
         }
     }
 
-    FILE *accesses = fopen("accesos.txt", "w");
-    int current_line_accesses = 0;
+    current_dir = init_dir("base_dir", 0);
+    current_dir -> absolute_path = "base_dir/";
+    simdisk[0] &= (~FREE_BLOCK); // set free to 0
+    simdisk[0] |= IS_DIRECTORY; // set is directory to 1
+    uint32_t metadata = get_metadata(simdisk[0]);
+    fprintf(accesses, "%s\n", current_dir->absolute_path);
+    simdisk[0] = ((current_line_accesses << 8) | metadata);
+
+    current_line_accesses++;        
+
+
+
+
+
+
+
+
 
     int executed_instructions = 0;
 
@@ -167,7 +178,22 @@ int main(int argc, char** argv)
             {
                 fscanf(action_file, "%s\n", buff);
 
-                Dir* new_directory = has_subdir(current_dir, buff);
+
+                Dir* new_directory;
+
+                if (strcmp(buff,".") == 0)
+                {  
+                    new_directory = current_dir;
+                }
+                else if (strcmp(buff,"..") == 0)
+                {
+                    new_directory = current_dir->parent_dir;
+                }
+                else
+                {
+                    new_directory = has_subdir(current_dir, buff);
+                }
+
 
                 if (new_directory)
                 {
@@ -213,8 +239,8 @@ int main(int argc, char** argv)
                             insert_dir(parent_directory, new_dir);
 
                             // manage block info
-                            *free_block ^= FREE_BLOCK; // toggle free_to 0
-                            *free_block = IS_DIRECTORY; // toggle  is directory to 1
+                            *free_block &= (~FREE_BLOCK); // toggle free_to 0
+                            *free_block |= IS_DIRECTORY; // toggle  is directory to 1
                             uint32_t metadata = get_metadata(*free_block);
 
                             // write access
@@ -275,8 +301,8 @@ int main(int argc, char** argv)
                             uint32_t block_index = free_block-simdisk;
                             File* new_file = init_file(new_file_name, block_index);
                             insert_file(parent_directory, new_file);
-                            *free_block ^= FREE_BLOCK; // toggle free_to 0
-                            *free_block = IS_CONTENT; // toggle  is content to 1
+                            *free_block &= (~FREE_BLOCK); // toggle free_to 0
+                            *free_block |= IS_CONTENT; // toggle  is content to 1
                             uint32_t metadata = get_metadata(*free_block);
                             *free_block = ((ENDOFFILE << 8) | metadata);
                         }

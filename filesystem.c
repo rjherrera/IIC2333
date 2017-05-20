@@ -100,7 +100,8 @@ uint32_t get_metadata(uint32_t block)
 
 uint32_t get_pointer(uint32_t block)
 {
-    return (block & (((1 << 31)-1) << 8))>>8;
+    // return (block & (((1 << 31)-1) << 8))>>8;
+    return (block >> 8);
 }
 
 // void set_metadata(uint32_t metadata, uint32_t block)
