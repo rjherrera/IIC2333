@@ -1,167 +1,18 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <stdbool.h>
-
-#define SEED 1
-#define ACTIONS 2
-#define UNTILL 4
-#define DISK 8
-
-#define FREE_BLOCK 4
-#define IS_DIRECTORY 8
-#define IS_CONTENT 16
-
-
-#define DISK_SIZE 1048576
-#define FIXED_SIZE 100
-
-typedef struct archivo
-{
-    char* name;
-    uint32_t mem_dir;
-    uint32_t memory_used;
-} MyFile;
-
-MyFile* init_file(char* name, uint32_t assigned_disk_block)
-{
-    MyFile* al = malloc(sizeof(MyFile));
-    strcpy(al -> name, name);
-    al -> mem_dir = assigned_disk_block;
-    al -> memory_used = 4096;
-    return al;
-}
-
-typedef struct directory
-{
-    char* absolute_path;
-    char* name;
-    int n_subdirs;
-    struct directory** subdirs;
-    MyFile** files;
-    int n_files;
-} Dir;
-
-int file_is_in(char* file_name, Dir* dir){
-    for (int i = 0; i < dir->n_files; ++i)
-    {
-        if (!strcmp(dir -> files[i] -> name, file_name)) return i;
-    }
-    return -1;
-}
-
-Dir* init_dir(char* path, char* name){
-    Dir* dir = malloc(sizeof(Dir));
-    dir -> absolute_path = malloc(strlen(path));
-    dir -> name = malloc(strlen(name));
-    strcpy(dir -> absolute_path, path);
-    strcpy(dir -> name, name);
-    dir -> n_subdirs = 0;
-    dir -> subdirs = malloc(sizeof(Dir*) * FIXED_SIZE);
-    return dir;
-}
-
-void insert_dir(Dir* dir, Dir* subdir){
-    if (dir -> n_subdirs % FIXED_SIZE == 0) {
-        dir -> subdirs = realloc(dir -> subdirs, (dir -> n_subdirs/FIXED_SIZE + 1) * sizeof(Dir*));
-    }
-    dir -> subdirs[dir -> n_subdirs] = subdir;
-    dir -> n_subdirs++;
-}
-
-uint32_t get_metadata(uint32_t block)
-{
-    return (block & ((1 << 8)-1));
-}
-
-uint32_t get_pointer(uint32_t block)
-{
-    return (block & (((1 << 31)-1) << 8))>>8;
-}
-
-uint32_t remake_block(uint32_t metadata, uint32_t pointer)
-{
-    return (pointer << 8) | metadata;
-}
-
-char* select_random_root(int seed)
-{
-
-}
-
-int find_free_block(uint32_t* disk)
-{
-    for (uint32_t block = 0; block < DISK_SIZE; ++block)
-    {
-        uint32_t metadata = get_metadata(disk[block]);
-        if (metadata & FREE_BLOCK)
-        {
-            return block;
-        }
-    }
-}
-
-int is_in(char* dir_name, Dir* dir){
-    for (int i = 0; i < dir -> n_subdirs; ++i){
-        if (!strcmp(dir -> subdirs[i] -> name, dir_name)) return i;
-    }
-    return -1;
-}
-
-Dir* has_subdir(Dir* actual_dir, char* path){
-    // Función que dado un directorio entrega si un path
-    // dentro de el existe (si en root hay un usr/raimundo)
-    // osea que se pueda ir a root/usr/raimundo
-    // retorna NULL si no se puede, y el puntero al directorio
-    // si esque si se puede (raimundo en ese caso)
-    // printf("Destino final: %s\n", path);
-    char* path_piece = strtok(path, "/");
-    char* last;
-    while (path_piece) {
-        // printf("Estoy en: %s\n", actual_dir -> name);
-        // printf("Quiero ir a: %s\n", path_piece);
-        last = malloc(strlen(path_piece));
-        strcpy(last, path_piece);
-        path_piece = strtok(NULL, "/");
-        int dir_index = is_in(last, actual_dir);
-        // printf("Índice: %d\n", dir_index);
-        // si no estaba, entonces retorno null
-        if (dir_index == -1) return NULL;
-        // si estaba, entonces me cambio a ese directorio y me quedo dentro
-        actual_dir = actual_dir -> subdirs[dir_index];
-
-        // if (path_piece != NULL){
-        //     printf("This piece is %s\n", last);
-        // }
-
-    }
-    // libero la memoria usada para el strtok
-    free(last);
-    // printf("Finalmente estoy en dir: %s\n", actual_dir -> name);
-    return actual_dir;
-}
-
-// void generate_new_instruction(int seed)
-// {
-//     srand(seed);
-//     char* instructions[5] = {
-//         "cd"
-
-//     };
-//     int index = rand();
-// }
+#include "filesystem.c"
 
 Dir* current_dir;
 
 int main(int argc, char** argv)
 {
     // inicializacion
-    current_dir = init_dir("base_dir", "base_dir");
-    Dir* otro_dir1 = init_dir("base_dir/hola", "hola");
-    Dir* otro_dir2 = init_dir("base_dir/chao", "chao");
-    Dir* otro_dir1a = init_dir("base_dir/hola/wena", "wena");
+    // current_dir = init_dir("base_dir", "base_dir",0);
+    // Dir* otro_dir1 = init_dir("base_dir/hola", "hola",0);
+    // Dir* otro_dir2 = init_dir("base_dir/chao", "chao",0);
+    // Dir* otro_dir1a = init_dir("base_dir/hola/wena", "wena",0);
+    current_dir = init_dir("base_dir", 0);
+    Dir* otro_dir1 = init_dir("hola", 0);
+    Dir* otro_dir2 = init_dir("chao", 0);
+    Dir* otro_dir1a = init_dir("wena", 0);
 
     // test methods
     insert_dir(current_dir, otro_dir1);
@@ -288,6 +139,10 @@ int main(int argc, char** argv)
         }
     }
 
+    FILE *accesses = fopen("accesos.txt", "w");
+    int current_line_accesses = 0;
+
+    int executed_instructions = 0;
 
     if (acum_flags & ACTIONS)
     {
@@ -326,19 +181,54 @@ int main(int argc, char** argv)
             {
                 fscanf(action_file, "%s\n", buff);
 
-                char* new_dir_name = strrchr(buff, '/') + 1;
+                char* new_dir_name = strrchr(buff, '/');
 
-                char* parent_directory_path = malloc(sizeof(char)*(new_dir_name-buff-1));
-                strncpy(parent_directory_path, buff, new_dir_name-buff-1);
+                char* parent_directory_path;
+                Dir* parent_directory;
 
-                Dir* parent_directory = has_subdir(current_dir, parent_directory_path);
+                if (new_dir_name)
+                {
+                    new_dir_name+=1;
+                    parent_directory_path = malloc(sizeof(char)*(new_dir_name-buff-1));
+                    strncpy(parent_directory_path, buff, new_dir_name-buff-1);
+                    parent_directory = has_subdir(current_dir, parent_directory_path);
+                }
+                else
+                {
+                    new_dir_name = buff;
+                    parent_directory_path = current_dir->absolute_path; 
+                    parent_directory = current_dir;
+                }
 
                 if (parent_directory)
                 {
                     if (is_in(new_dir_name, parent_directory) == -1)
                     {
-                        Dir* new_dir = init_dir(buff,new_dir_name);
-                        insert_dir(parent_directory, new_dir);
+                        uint32_t* free_block = find_free_block(simdisk);
+                        if (free_block){
+                            // manage file system info
+                            uint32_t block_index = free_block-simdisk;
+                            Dir* new_dir = init_dir(new_dir_name, block_index);
+                            insert_dir(parent_directory, new_dir);
+
+                            // manage block info
+                            *free_block ^= FREE_BLOCK; // toggle free_to 0
+                            *free_block = IS_DIRECTORY; // toggle  is directory to 1
+                            uint32_t metadata = get_metadata(*free_block);
+
+                            // write access
+                            fprintf(accesses, "%s\n", new_dir->absolute_path);
+                            *free_block = ((current_line_accesses << 8) | metadata);
+
+                            current_line_accesses++;
+                        }
+                        else
+                        {
+                            printf("El disco esta lleno. Instruccion ignorada.\n");
+                        }
+
+
+
                     }
                     else
                     {
@@ -355,17 +245,49 @@ int main(int argc, char** argv)
             {
                 fscanf(action_file, "%s\n", buff);
 
-                char* new_file_name = strrchr(buff, '/') + 1;
+                char* new_file_name = strrchr(buff, '/');
 
-                char* parent_directory_path = malloc(sizeof(char)*(new_file_name-buff-1));
-                strncpy(parent_directory_path, buff, new_file_name-buff-1);
+                char* parent_directory_path;
+                Dir* parent_directory;
 
-                Dir* parent_directory = has_subdir(current_dir, parent_directory_path);
+                if (new_file_name)
+                {
+                    new_file_name+=1;
+                    parent_directory_path = malloc(sizeof(char)*(new_file_name-buff-1));
+                    strncpy(parent_directory_path, buff, new_file_name-buff-1);
+                    parent_directory = has_subdir(current_dir, parent_directory_path);
+                }
+                else
+                {
+                    new_file_name = buff;
+                    parent_directory_path = current_dir->absolute_path; 
+                    parent_directory = current_dir;
+                }
 
                 if (parent_directory)
                 {
-                    MyFile* new_file = init_file(buff,new_file_name);
-                    insert_file(parent_directory, new_file);
+
+                    if (file_is_in(new_file_name, parent_directory) == -1)
+                    {
+                        uint32_t* free_block = find_free_block(simdisk);
+                        if (free_block){
+                            uint32_t block_index = free_block-simdisk;
+                            File* new_file = init_file(new_file_name, block_index);
+                            insert_file(parent_directory, new_file);
+                            *free_block ^= FREE_BLOCK; // toggle free_to 0
+                            *free_block = IS_CONTENT; // toggle  is content to 1
+                            uint32_t metadata = get_metadata(*free_block);
+                            *free_block = ((ENDOFFILE << 8) | metadata);
+                        }
+                        else
+                        {
+                            printf("El disco esta lleno. Instruccion ignorada.\n");
+                        }
+                    }
+                    else
+                    {
+                        printf("La ruta relativa %s ya contiene un archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, new_file_name);
+                    }                    
                 }
                 else
                 {
@@ -391,14 +313,20 @@ int main(int argc, char** argv)
             else if (strcmp(key, "rd") == 0)
             {
 
-
             }
             else
             {
                 printf("%s is not a valid instruction. Ignored.\n", key);
             }
 
-
+            if (acum_flags & UNTILL)
+            {
+                executed_instructions++;
+                if (executed_instructions == steps)
+                {
+                    break;
+                }
+            }
             // if (fgets (buff, 200, action_file) != NULL)
             // {
             //     printf("With this Argument %s \n",buff);
@@ -406,29 +334,24 @@ int main(int argc, char** argv)
             // executed_instructions++;
         }
 
-
-
         fclose(action_file);
-
-        if (acum_flags & UNTILL)
-        {
-
-            // steps_done = 0
-            // for action in actions.txt
-            //.   execute_action
-            //    steps_done++
-            // while steps_done < steps:
-            //      generate_random_action(seed)
-            //      execute it
-        }
     }
-    else
-    {
+
+    if (executed_instructions < steps){
+        // SI NO HUBO UNTILL, ESTO OCURRIRA SI O SI
+        // SI HUBO UNTILL, EXECUTED INSTRUCTIONS NO SERA 0, Y DEPENDERA DE CUANTAS SE EJECUTARON
+
 
         // generate steps instructions and execute em
+
+
+        // EJECUTAR STEPS
     }
 
 
+    fclose(accesses);
+
+    // GENERAR DIRECTORIOS Y .TXTS RESPECTIVOS RECURSIVAMENTE Y AÑADIR RUTAS A ESOS .TXTS EN ACCESOS.TXT Y GENERAR BITMAP
 
 
 }
