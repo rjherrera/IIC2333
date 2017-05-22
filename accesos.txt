@@ -1,0 +1,7 @@
+base_dir.txt
+base_dir/directorio1.txt
+base_dir/directorio2.txt
+base_dir/directorio1/subdiruno.txt
+base_dir/directorio2/subdirdos.txt
+base_dir/directorio1/directorio2.txt
+base_dir/directorio1/directorio2/subdirdos.txt

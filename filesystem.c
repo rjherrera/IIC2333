@@ -29,11 +29,17 @@ typedef struct archivo
 File* init_file(char* name, uint32_t assigned_disk_block)
 {
     File* al = malloc(sizeof(File));
-    al -> name = malloc(strlen(name)*sizeof(char));
+    al -> name = malloc(strlen(name)*sizeof(char)+1);
     strcpy(al -> name, name);
     al -> mem_dir = assigned_disk_block;
     al -> memory_used = 50;
     return al;
+}
+
+void destroy_file(File* file)
+{
+    free(file -> name);
+    free(file);
 }
 
 typedef struct directory
@@ -50,10 +56,8 @@ typedef struct directory
 
 Dir* init_dir(char* name, uint32_t assigned_disk_block){
     Dir* dir = malloc(sizeof(Dir));
-    // dir -> absolute_path = malloc(strlen(path)*sizeof(char));
     dir -> absolute_path = NULL;
     dir -> name = malloc(strlen(name)*sizeof(char));
-    // strcpy(dir -> absolute_path, path);
     strcpy(dir -> name, name);
     dir -> n_subdirs = 0;
     dir -> subdirs = malloc(sizeof(Dir*) * FIXED_SIZE);
@@ -64,15 +68,29 @@ Dir* init_dir(char* name, uint32_t assigned_disk_block){
     return dir;
 }
 
+uint32_t get_pointer(uint32_t block)
+{
+    return (block >> 8);
+}
+
+uint32_t get_metadata(uint32_t block)
+{
+    return (block & ((1 << 8)-1));
+}
+
 void set_parent(Dir* dir, Dir* parent_dir)
 {
     // SETS PARENT AND NEW ABSOLUTE_PATH
     // abs_path always ends with /
+    if (dir -> absolute_path)
+    {
+        free(dir -> absolute_path);
+    }
     dir -> parent_dir = parent_dir;
     dir -> absolute_path = malloc(sizeof(char) * (strlen(parent_dir -> absolute_path) + strlen(dir -> name) + 2));
     strcpy(dir -> absolute_path, parent_dir -> absolute_path);
+    strcat(dir -> absolute_path, "/");
     strcat(dir -> absolute_path, dir -> name);
-    strcat(dir -> absolute_path, "/");    
 }
 
 void insert_dir(Dir* dir, Dir* subdir){
@@ -85,6 +103,128 @@ void insert_dir(Dir* dir, Dir* subdir){
     dir -> n_subdirs++;
 }
 
+void update_absolute_path(Dir* directory, char* new_parent_absolute_path, uint32_t* simdisk, int* current_accesses, FILE* access_file)
+{
+    if (directory -> absolute_path)
+    {
+        free(directory -> absolute_path);
+    }
+    directory -> absolute_path = malloc(sizeof(char) * (strlen(new_parent_absolute_path) + strlen(directory -> name) + 2));
+    strcpy(directory -> absolute_path, new_parent_absolute_path);
+    strcat(directory -> absolute_path, "/");
+    strcat(directory -> absolute_path, directory -> name);
+
+    fprintf(access_file, "%s.txt\n", directory->absolute_path);
+    simdisk[directory -> mem_dir] = ((*current_accesses << 8) | get_metadata(simdisk[directory -> mem_dir]));
+    *current_accesses +=1;
+
+    for (int subd_index = 0; subd_index < directory -> n_subdirs; ++subd_index)
+    {
+        update_absolute_path(directory -> subdirs[subd_index], directory -> absolute_path, simdisk, current_accesses, access_file);
+    }
+}
+
+void remove_dir(Dir* dir, Dir* subdir_to_remove){
+    Dir* last_inserted = dir -> subdirs[dir -> n_subdirs - 1];
+    if (last_inserted == subdir_to_remove)
+    {
+        dir -> subdirs[dir -> n_subdirs - 1] = NULL;
+    }
+    else
+    {
+        for (int index = 0; index < dir -> n_subdirs; ++index)
+        {
+            if (dir -> subdirs[index] == subdir_to_remove) dir -> subdirs[index] = last_inserted;
+        }
+    }
+    dir ->n_subdirs--; 
+}
+
+void recursive_release(uint32_t* simdisk, uint32_t block_index){
+    uint32_t block_pointer = get_pointer(simdisk[block_index]);
+    simdisk[block_index] = FREE_BLOCK;
+    if (block_pointer != ENDOFFILE)
+    {
+        recursive_release(simdisk, block_pointer);
+    }
+}
+
+int find_number_of_block_of_line(uint32_t number, int* remaining_till_full){
+    int counter = 0;
+    if (number < 4046)
+    {
+        *remaining_till_full = 4046 - number;
+        return 0;
+    }
+    number -= 4046;
+    counter++;
+    while (number > 4096)
+    {
+        number -= 4096;
+        counter++;
+    }
+    *remaining_till_full = 4096 - number;
+    return counter;
+}
+
+void release_block_trail(File* file_to_release, uint32_t* simdisk){
+    // TO DO
+    uint32_t block_index = file_to_release -> mem_dir;
+    recursive_release(simdisk, block_index);
+}
+
+uint32_t recursive_get_last_block_index(uint32_t* simdisk, uint32_t block_index){
+    uint32_t block_pointer = get_pointer(simdisk[block_index]);
+    if (block_pointer != ENDOFFILE)
+    {
+        return recursive_get_last_block_index(simdisk, block_pointer);
+    }
+    else
+    {
+        return block_index;
+    }
+}
+
+uint32_t get_last_block_index(File* file, uint32_t* simdisk){
+    uint32_t block_index = file -> mem_dir;
+    return recursive_get_last_block_index(simdisk, block_index);
+}
+
+void delete_release_and_destroy_dir(Dir* dir_to_rm, uint32_t* simdisk)
+{
+    simdisk[dir_to_rm -> mem_dir] = FREE_BLOCK;
+    for (int subdir_index = 0; subdir_index < dir_to_rm -> n_subdirs; ++subdir_index)
+    {
+        delete_release_and_destroy_dir(dir_to_rm -> subdirs[subdir_index], simdisk);
+    }
+    for (int file_index = 0; file_index < dir_to_rm -> n_files; ++file_index)
+    {
+        release_block_trail(dir_to_rm -> files[file_index], simdisk);
+        destroy_file(dir_to_rm -> files[file_index]);
+    }
+    free(dir_to_rm -> name);
+    free(dir_to_rm -> absolute_path);
+    free(dir_to_rm -> subdirs);
+    free(dir_to_rm -> files);
+    free(dir_to_rm);
+}
+
+void remove_file(Dir* dir, File* file_to_remove){
+    File* last_inserted = dir -> files[dir -> n_files - 1];
+    if (last_inserted == file_to_remove)
+    {
+        dir -> files[dir -> n_files - 1] = NULL;
+    }
+    else
+    {
+        for (int index = 0; index < dir -> n_files; ++index)
+        {
+            if (dir -> files[index] == file_to_remove) dir -> files[index] = last_inserted;
+        }
+    }
+    dir ->n_files--; 
+}
+
 void insert_file(Dir* dir, File* file){
     if (dir -> n_files % FIXED_SIZE == 0) {
         dir -> files = realloc(dir -> files, (dir -> n_files/FIXED_SIZE + 1) * sizeof(File*));
@@ -92,27 +232,6 @@ void insert_file(Dir* dir, File* file){
     dir -> files[dir -> n_files] = file;
     dir -> n_files++;
 }
-
-uint32_t get_metadata(uint32_t block)
-{
-    return (block & ((1 << 8)-1));
-}
-
-uint32_t get_pointer(uint32_t block)
-{
-    // return (block & (((1 << 31)-1) << 8))>>8;
-    return (block >> 8);
-}
-
-// void set_metadata(uint32_t metadata, uint32_t block)
-// {
-
-// }
-
-// void set_pointer(uint32_t pointer, uint32_t block)
-// {
-
-// }
 
 uint32_t remake_block(uint32_t metadata, uint32_t pointer)
 {
@@ -154,6 +273,12 @@ Dir* has_subdir(Dir* actual_dir, char* path){
     // retorna NULL si no se puede, y el puntero al directorio
     // si esque si se puede (raimundo en ese caso)
     // printf("Destino final: %s\n", path);
+
+    if (strcmp(path, ".") == 0)
+    {
+        return actual_dir;
+    }
+
     char* path_copy = malloc(sizeof(char)*strlen(path));
     strcpy(path_copy, path);
     char* path_piece = strtok(path_copy, "/");

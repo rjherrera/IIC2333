@@ -1,4 +1,13 @@
-cd algunawea_De_directorio
-mkdir rutanose/algocomoque/wuh_que_cosa
-mkdir nombreequis
-mkfile nombreequis/hola
+mkdir directorio1
+mkdir directorio2
+mkfile un_archivo
+mkdir directorio1/subdiruno
+mkdir directorio2/subdirdos
+mkfile directorio1/otro_archivo
+mkfile directorio1/subdiruno/foo
+cd directorio1
+cd ..
+mv directorio2 directorio1
+mv un_archivo directorio1/directorio2/subdirdos
+
+mv directorio1/directorio2/subdirdos/un_archivo .
