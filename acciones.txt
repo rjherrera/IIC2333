@@ -9,5 +9,5 @@ cd directorio1
 cd ..
 mv directorio2 directorio1
 mv un_archivo directorio1/directorio2/subdirdos
-
+mv hola
 mv directorio1/directorio2/subdirdos/un_archivo .

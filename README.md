@@ -20,3 +20,5 @@ está dentro del espacio que tiene el archivo, y que es mayor o igual a 1.
 Se asumió que si se reducía el tamaño de un archivo, en el peor de los casos quedaría con 0 Bytes, pero sus 50B virtuales seguirían existiendo. También se asumió que el número de bytes a eliminar está dentro de los rangos posibles, asumiendo que no se pueden borrar los primeros 50B virtuales.
 
 Se asume que las instrucciones contienen la cantidad de argumentos que deberían tener. Si bien la simulación ignora las instrucciones mal escritas o sin sentido, si instrucciones que deberían venir con 2 argumentos vienen con solo 1, se escanearán 2, y reemplazará el que debiese haber sido el segundo argumento con la primera palabra de la línea siguiente, descuadrando las instrucciones de ahí para adelante, y por lo tanto ignorándolas todas.
+
+Se asume que instrucción siempre parte con una keyword para la instrucción, seguida de un espacio antes de los parámetros.

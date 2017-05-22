@@ -127,6 +127,7 @@ int main(int argc, char** argv)
         // fseek(read_disk, 0, SEEK_SET);
         fread(simdisk, 4, sizeof(simdisk),read_disk);
         fclose(read_disk);
+        // usamos 
     }
     else
     {
@@ -172,15 +173,19 @@ int main(int argc, char** argv)
         char buff2[200];
         char buff3[200];
 
+        char buff_whole_line[1024];
+
         // while (fgets (buff, 200, action_file) != NULL)
         // int executed_instructions = 0;
         // while (executed_instructions < steps && fscanf(action_file, "%s\n", key) == 1)
+        // while (fscanf(action_file, "%s\n", key) == 1)
         while (fscanf(action_file, "%s\n", key) == 1)
         {
             if (strcmp(key, "cd") == 0)
             {
-                fscanf(action_file, "%s\n", buff);
-
+                // fscanf(action_file, "%s\n", buff);
+                fgets(buff_whole_line, 1024, action_file);
+                sscanf(buff_whole_line, "%s", buff);
 
                 Dir* new_directory;
 
@@ -211,7 +216,9 @@ int main(int argc, char** argv)
             }
             else if (strcmp(key, "mkdir") == 0)
             {
-                fscanf(action_file, "%s\n", buff);
+                // fscanf(action_file, "%s\n", buff);
+                fgets(buff_whole_line, 1024, action_file);
+                sscanf(buff_whole_line, "%s\n", buff);                
 
                 char* new_dir_name = strrchr(buff, '/');
 
@@ -280,7 +287,9 @@ int main(int argc, char** argv)
             }
             else if (strcmp(key, "mkfile") == 0)
             {
-                fscanf(action_file, "%s\n", buff);
+                // fscanf(action_file, "%s\n", buff);
+                fgets(buff_whole_line, 1024, action_file);
+                sscanf(buff_whole_line, "%s\n", buff);
 
                 char* new_file_name = strrchr(buff, '/');
 
@@ -339,10 +348,13 @@ int main(int argc, char** argv)
             }
             else if (strcmp(key, "mv") == 0)
             {
+                // sscanf(buff_whole_line, "%s %s", buff, buff2);
+                fgets(buff_whole_line, 1024, action_file);
                 
-                if (fscanf(action_file, "%s %s\n", buff, buff2) != 2)
+                // if (fscanf(action_file, "%s %s\n", buff, buff2) != 2)
+                if (sscanf(buff_whole_line, "%s %s", buff, buff2) != 2)
                 {
-                    printf("Debes ingresar tanto la ruta relativa del archivo a mover como el nuevo destino. Instruccion ignorada.\n");
+                    printf("Debes ingresar tanto la ruta relativa del archivo a mover como el nuevo destino. Instruccion  %s ignorada.\n", buff_whole_line);
                     continue;
                 }
 
@@ -434,7 +446,9 @@ int main(int argc, char** argv)
             }
             else if (strcmp(key, "rm") == 0)
             {
-                fscanf(action_file, "%s\n", buff);
+                // fscanf(action_file, "%s\n", buff);
+                fgets(buff_whole_line, 1024, action_file);
+                sscanf(buff_whole_line, "%s", buff);
 
                 char* sth_to_rm_name = strrchr(buff, '/');
 
@@ -492,7 +506,10 @@ int main(int argc, char** argv)
             }
             else if (strcmp(key, "ad") == 0)
             {
-                int num_scans = fscanf(action_file, "%s %s %s\n", buff, buff2, buff3);
+                fgets(buff_whole_line, 1024, action_file);
+                int num_scans = sscanf(buff_whole_line, "%s %s %s\n", buff, buff2, buff3);
+                // int num_scans = fscanf(action_file, "%s %s %s\n", buff, buff2, buff3);
+
 
                 if (num_scans == 2 || num_scans == 3){
 
@@ -594,15 +611,15 @@ int main(int argc, char** argv)
                 else
                 {
                     printf("Debes ingresar la ruta relativa al archivo y la cantidad de bytes a agregar, \
-                        seguido opcionalmente de la posicion en el archivo que deseas comenzar la escritura. Instruccion ignorada.\n");
+                        seguido opcionalmente de la posicion en el archivo que deseas comenzar la escritura. Instruccion  %s ignorada.\n", buff_whole_line);
                     continue;
                 }
-
             }
             else if (strcmp(key, "rd") == 0)
             {
-
-                int num_scans = fscanf(action_file, "%s %s %s\n", buff, buff2, buff3);
+                fgets(buff_whole_line, 1024, action_file);
+                // int num_scans = fscanf(action_file, "%s %s %s\n", buff, buff2, buff3);
+                int num_scans = sscanf(buff_whole_line, "%s %s %s\n", buff, buff2, buff3);
 
                 if (num_scans == 2 || num_scans == 3){
 
@@ -756,7 +773,6 @@ int main(int argc, char** argv)
                         seguido opcionalmente de la posicion en el archivo que deseas comenzar la eliminacion. Instruccion ignorada.\n");
                     continue;
                 }
-
             }
             else
             {
