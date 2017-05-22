@@ -179,12 +179,15 @@ int main(int argc, char** argv)
         // int executed_instructions = 0;
         // while (executed_instructions < steps && fscanf(action_file, "%s\n", key) == 1)
         // while (fscanf(action_file, "%s\n", key) == 1)
+        int counter = 0;
         while (fscanf(action_file, "%s\n", key) == 1)
         {
             if (strcmp(key, "cd") == 0)
             {
                 // fscanf(action_file, "%s\n", buff);
                 fgets(buff_whole_line, 1024, action_file);
+                buff_whole_line[strlen(buff_whole_line)-1] = 0;
+                printf("Se intentara ejecutar instruccion cd %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
                 sscanf(buff_whole_line, "%s", buff);
 
                 Dir* new_directory;
@@ -218,6 +221,9 @@ int main(int argc, char** argv)
             {
                 // fscanf(action_file, "%s\n", buff);
                 fgets(buff_whole_line, 1024, action_file);
+                buff_whole_line[strlen(buff_whole_line)-1] = 0;
+
+                printf("Se intentara ejecutar instruccion mkdir %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
                 sscanf(buff_whole_line, "%s\n", buff);                
 
                 char* new_dir_name = strrchr(buff, '/');
@@ -289,6 +295,8 @@ int main(int argc, char** argv)
             {
                 // fscanf(action_file, "%s\n", buff);
                 fgets(buff_whole_line, 1024, action_file);
+                buff_whole_line[strlen(buff_whole_line)-1] = 0;
+                printf("Se intentara ejecutar instruccion mkfile %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
                 sscanf(buff_whole_line, "%s\n", buff);
 
                 char* new_file_name = strrchr(buff, '/');
@@ -325,7 +333,7 @@ int main(int argc, char** argv)
                             uint32_t metadata = get_metadata(*free_block);
                             *free_block = ((ENDOFFILE << 8) | metadata);
 
-                            printf("Has creado el archivo %s dentro del directorio de ruta absoluta %s\n", new_file->name, parent_directory->absolute_path);
+                            printf("Has creado el archivo %s dentro del directorio de ruta absoluta %s\n", new_file_name, parent_directory->absolute_path);
 
                         }
                         else
@@ -350,7 +358,8 @@ int main(int argc, char** argv)
             {
                 // sscanf(buff_whole_line, "%s %s", buff, buff2);
                 fgets(buff_whole_line, 1024, action_file);
-                
+                buff_whole_line[strlen(buff_whole_line)-1] = 0;
+                printf("Se intentara ejecutar instruccion mv %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
                 // if (fscanf(action_file, "%s %s\n", buff, buff2) != 2)
                 if (sscanf(buff_whole_line, "%s %s", buff, buff2) != 2)
                 {
@@ -399,6 +408,10 @@ int main(int argc, char** argv)
                             insert_file(destination_parent_dir, file_to_move);
 
                             printf("Se ha movido el archivo %s a la ruta %s\n", buff, buff2);
+                            for (int i = 0; i < current_dir -> n_files; ++i)
+                            {
+                                printf("Dir actual contiene archivo %s\n", current_dir -> files[i]->name);
+                            }
                         }
                         else
                         {
@@ -448,6 +461,8 @@ int main(int argc, char** argv)
             {
                 // fscanf(action_file, "%s\n", buff);
                 fgets(buff_whole_line, 1024, action_file);
+                buff_whole_line[strlen(buff_whole_line)-1] = 0;
+                printf("Se intentara ejecutar instruccion rm %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
                 sscanf(buff_whole_line, "%s", buff);
 
                 char* sth_to_rm_name = strrchr(buff, '/');
@@ -507,6 +522,8 @@ int main(int argc, char** argv)
             else if (strcmp(key, "ad") == 0)
             {
                 fgets(buff_whole_line, 1024, action_file);
+                buff_whole_line[strlen(buff_whole_line)-1] = 0;
+                printf("Se intentara ejecutar instruccion ad %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
                 int num_scans = sscanf(buff_whole_line, "%s %s %s\n", buff, buff2, buff3);
                 // int num_scans = fscanf(action_file, "%s %s %s\n", buff, buff2, buff3);
 
@@ -515,6 +532,7 @@ int main(int argc, char** argv)
 
 
                     char* file_to_w_name = strrchr(buff, '/');
+
 
                     char* parent_directory_path;
                     Dir* parent_directory;
@@ -618,7 +636,9 @@ int main(int argc, char** argv)
             else if (strcmp(key, "rd") == 0)
             {
                 fgets(buff_whole_line, 1024, action_file);
-                // int num_scans = fscanf(action_file, "%s %s %s\n", buff, buff2, buff3);
+                buff_whole_line[strlen(buff_whole_line)-1] = 0;
+
+                printf("Se intentara ejecutar instruccion rd %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
                 int num_scans = sscanf(buff_whole_line, "%s %s %s\n", buff, buff2, buff3);
 
                 if (num_scans == 2 || num_scans == 3){
@@ -754,6 +774,8 @@ int main(int argc, char** argv)
                                 file_to_write -> memory_used -= atoi(buff2); 
                             }
 
+                            printf("Se han eliminado %i bytes del archivo %s\n", atoi(buff2), file_to_w_name);
+
                         }
                         else
                         {
@@ -787,7 +809,8 @@ int main(int argc, char** argv)
                     break;
                 }
             }
-
+            counter++;
+            printf("\n");
         }
 
         fclose(action_file);

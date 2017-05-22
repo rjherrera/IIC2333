@@ -11,3 +11,10 @@ mv directorio2 directorio1
 mv un_archivo directorio1/directorio2/subdirdos
 mv hola
 mv directorio1/directorio2/subdirdos/un_archivo .
+ad un_archivo 10000
+ad un_archivo 4000
+ad un_archivo 60500
+rd un_archivo 200
+rd un_archivo 30000
+rd un_archivo 30500
+rd un_archivo 200 0
