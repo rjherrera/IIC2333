@@ -1,4 +1,6 @@
+#include <inttypes.h>
 #include "filesystem.c"
+#include "generator.c"
 
 Dir* current_dir;
 
@@ -125,9 +127,9 @@ int main(int argc, char** argv)
     {
         FILE* read_disk = fopen(disk, "rb");
         // fseek(read_disk, 0, SEEK_SET);
-        fread(simdisk, 4, sizeof(simdisk),read_disk);
+        fread(simdisk, sizeof(uint32_t), DISK_SIZE / sizeof(uint32_t), read_disk);
         fclose(read_disk);
-        // usamos 
+        // usamos
     }
     else
     {
@@ -137,6 +139,7 @@ int main(int argc, char** argv)
         }
     }
 
+    Dir* root_dir;
     current_dir = init_dir("base_dir", 0);
     current_dir -> absolute_path = malloc(sizeof(char)*strlen("base_dir"));
     strcpy(current_dir -> absolute_path, "base_dir");
@@ -146,9 +149,9 @@ int main(int argc, char** argv)
     fprintf(accesses, "%s.txt\n", current_dir->absolute_path);
     simdisk[0] = ((current_line_accesses << 8) | metadata);
 
-    current_line_accesses++;        
+    current_line_accesses++;
 
-
+    root_dir = current_dir;
 
 
 
@@ -180,8 +183,26 @@ int main(int argc, char** argv)
         // while (executed_instructions < steps && fscanf(action_file, "%s\n", key) == 1)
         // while (fscanf(action_file, "%s\n", key) == 1)
         int counter = 0;
+        //int nos_pasamos = 1;
+        //int rand_executed = 0;
+        //char** random_insts;
         while (fscanf(action_file, "%s\n", key) == 1)
         {
+            // if (!(fscanf(action_file, "%s\n", key) == 1)){
+            //     if (executed_instructions < steps){
+            //         if (nos_pasamos){
+            //             random_insts = generate_random_instructions(atoi(seed), steps - executed_instructions);
+            //             nos_pasamos = 0;
+            //             // solo generarlas una vez
+            //         }
+            //         printf("generar\n");
+            //         char* instruccion_random = random_insts[rand_executed++];
+            //         executed_instructions++;
+            //     }
+            //     else {
+            //         break;
+            //     }
+            // }
             if (strcmp(key, "cd") == 0)
             {
                 // fscanf(action_file, "%s\n", buff);
@@ -193,7 +214,7 @@ int main(int argc, char** argv)
                 Dir* new_directory;
 
                 if (strcmp(buff,".") == 0)
-                {  
+                {
                     new_directory = current_dir;
                 }
                 else if (strcmp(buff,"..") == 0)
@@ -224,7 +245,7 @@ int main(int argc, char** argv)
                 buff_whole_line[strlen(buff_whole_line)-1] = 0;
 
                 printf("Se intentara ejecutar instruccion mkdir %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
-                sscanf(buff_whole_line, "%s\n", buff);                
+                sscanf(buff_whole_line, "%s\n", buff);
 
                 char* new_dir_name = strrchr(buff, '/');
 
@@ -241,7 +262,7 @@ int main(int argc, char** argv)
                 else
                 {
                     new_dir_name = buff;
-                    parent_directory_path = current_dir->absolute_path; 
+                    parent_directory_path = current_dir->absolute_path;
                     parent_directory = current_dir;
                 }
 
@@ -267,7 +288,7 @@ int main(int argc, char** argv)
 
                             current_line_accesses++;
 
-                            // log 
+                            // log
                             printf("Has creado el directorio en la ruta absoluta %s\n", new_dir->absolute_path);
                         }
                         else
@@ -314,7 +335,7 @@ int main(int argc, char** argv)
                 else
                 {
                     new_file_name = buff;
-                    parent_directory_path = current_dir->absolute_path; 
+                    parent_directory_path = current_dir->absolute_path;
                     parent_directory = current_dir;
                 }
 
@@ -346,7 +367,7 @@ int main(int argc, char** argv)
                     {
                         printf("La ruta relativa %s ya contiene un archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, new_file_name);
                         continue;
-                    }                    
+                    }
                 }
                 else
                 {
@@ -393,7 +414,7 @@ int main(int argc, char** argv)
                     {
                         sth_to_move_name = buff;
                         // strcpy(sth_to_move_name, buff);
-                        parent_directory_path = current_dir->absolute_path; 
+                        parent_directory_path = current_dir->absolute_path;
                         parent_directory = current_dir;
                     }
 
@@ -426,10 +447,10 @@ int main(int argc, char** argv)
                                 remove_dir(parent_directory, dir_to_move);
                                 insert_dir(destination_parent_dir, dir_to_move);
 
-                                // Correct access info and 
+                                // Correct access info and
                                 fprintf(accesses, "%s.txt\n", dir_to_move->absolute_path);
                                 simdisk[dir_to_move -> mem_dir] = ((current_line_accesses << 8) | get_metadata(simdisk[dir_to_move -> mem_dir]));
-                                current_line_accesses++;                    
+                                current_line_accesses++;
 
                                 for (int subd_index = 0; subd_index < dir_to_move -> n_subdirs; ++subd_index)
                                 {
@@ -447,8 +468,8 @@ int main(int argc, char** argv)
                             {
                                 printf("La ruta relativa %s no contiene ni directorio ni archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, sth_to_move_name);
                                 continue;
-                            }                        
-                        }                    
+                            }
+                        }
                     }
                     else
                     {
@@ -480,7 +501,7 @@ int main(int argc, char** argv)
                 else
                 {
                     sth_to_rm_name = buff;
-                    parent_directory_path = current_dir->absolute_path; 
+                    parent_directory_path = current_dir->absolute_path;
                     parent_directory = current_dir;
                 }
 
@@ -493,7 +514,7 @@ int main(int argc, char** argv)
                         remove_file(parent_directory, file_to_rm);
                         release_block_trail(file_to_rm, simdisk);
                         destroy_file(file_to_rm);
-                        
+
                         printf("Has eliminado el archivo %s dentro del directorio de ruta absoluta %s\n", sth_to_rm_name, parent_directory->absolute_path);
                     }
                     else
@@ -510,8 +531,8 @@ int main(int argc, char** argv)
                         {
                             printf("La ruta relativa %s no contiene ni directorio ni archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, sth_to_rm_name);
                             continue;
-                        }                        
-                    }                    
+                        }
+                    }
                 }
                 else
                 {
@@ -547,7 +568,7 @@ int main(int argc, char** argv)
                     else
                     {
                         file_to_w_name = buff;
-                        parent_directory_path = current_dir->absolute_path; 
+                        parent_directory_path = current_dir->absolute_path;
                         parent_directory = current_dir;
                     }
 
@@ -562,7 +583,7 @@ int main(int argc, char** argv)
                             {
                                 write_offset = atoi(buff3);
                             }
-                            
+
                             int barrier = 4096;
                             while (file_to_write -> memory_used > barrier)
                             {
@@ -606,7 +627,7 @@ int main(int argc, char** argv)
                                 if (broke)
                                 {
                                     printf("Se ha llevado a cabo la escritura parcialmente pues se acabo el espacio en disco.\n");
-                                    continue;  
+                                    continue;
                                 }
                                 printf("Se han escrito %d bytes en archivo %s de directorio %s\n", atoi(buff2), file_to_write->name, parent_directory_path);
                             }
@@ -618,12 +639,12 @@ int main(int argc, char** argv)
                         {
                             printf("La ruta relativa %s no contiene un archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, file_to_w_name);
                             continue;
-                        }                 
+                        }
                     }
-                    else 
+                    else
                     {
-                        printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path); 
-                        continue;                       
+                        printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+                        continue;
                     }
                 }
                 else
@@ -659,7 +680,7 @@ int main(int argc, char** argv)
                     else
                     {
                         file_to_w_name = buff;
-                        parent_directory_path = current_dir->absolute_path; 
+                        parent_directory_path = current_dir->absolute_path;
                         parent_directory = current_dir;
                     }
 
@@ -674,7 +695,7 @@ int main(int argc, char** argv)
                             {
                                 write_starting_index = atoi(buff3);
                             }
-                            
+
                             int remaining_lines_till_full;
                             int block_of_starting_w = find_number_of_block_of_line(write_starting_index, &remaining_lines_till_full);
 
@@ -690,7 +711,7 @@ int main(int argc, char** argv)
                                 // handle border case if deletion starts on first block
                                 if (block_pointer_index == 0)
                                 {
-                                    // el bloque cero siempre contendra los primeros 50B, por lo que 
+                                    // el bloque cero siempre contendra los primeros 50B, por lo que
                                     // para cada 4096 dps de los primeros remaining se borraran bloques
                                     int additional_deletion = atoi(buff2) - remaining_lines_till_full;
                                     // for every 4096, delete a block
@@ -714,7 +735,7 @@ int main(int argc, char** argv)
                                 {
                                     // at least one block must be freed
                                     if (write_starting_index % 4096 == 0){
-                                        // for 
+                                        // for
                                         int num_blocks = 0;
                                         int temp_c = atoi(buff2);
                                         while (temp_c > 4096)
@@ -761,7 +782,7 @@ int main(int argc, char** argv)
                                         }
 
                                     }
-                                    
+
                                 }
                             }
 
@@ -771,7 +792,7 @@ int main(int argc, char** argv)
                             }
                             else
                             {
-                                file_to_write -> memory_used -= atoi(buff2); 
+                                file_to_write -> memory_used -= atoi(buff2);
                             }
 
                             printf("Se han eliminado %i bytes del archivo %s\n", atoi(buff2), file_to_w_name);
@@ -781,12 +802,12 @@ int main(int argc, char** argv)
                         {
                             printf("La ruta relativa %s no contiene un archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, file_to_w_name);
                             continue;
-                        }                 
+                        }
                     }
-                    else 
+                    else
                     {
-                        printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path); 
-                        continue;                       
+                        printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+                        continue;
                     }
                 }
                 else
@@ -812,25 +833,660 @@ int main(int argc, char** argv)
             counter++;
             printf("\n");
         }
-
         fclose(action_file);
-    }
+        char** r_inst = generate_random_instructions(atoi(seed), steps - executed_instructions);
+        // printf("%s\n", r_inst[0]);
+        int r_execs = 0;
+        // while (executed_instructions < steps){
+        //     // strncpy(key, r_inst[r_execs], 10);
+        //     if (strcmp(key, "cd") == 0)
+        //     {
+        //         // fscanf(action_file, "%s\n", buff);
+        //         strcpy(buff_whole_line, r_inst[r_execs++]);
+        //         buff_whole_line[strlen(buff_whole_line)-1] = 0;
+        //         printf("Se intentara ejecutar instruccion cd %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
+        //         sscanf(buff_whole_line, "%s", buff);
 
-    if (executed_instructions < steps){
-        // SI NO HUBO UNTILL, ESTO OCURRIRA SI O SI
-        // SI HUBO UNTILL, EXECUTED INSTRUCTIONS NO SERA 0, Y DEPENDERA DE CUANTAS SE EJECUTARON
+        //         Dir* new_directory;
+
+        //         if (strcmp(buff,".") == 0)
+        //         {
+        //             new_directory = current_dir;
+        //         }
+        //         else if (strcmp(buff,"..") == 0)
+        //         {
+        //             new_directory = current_dir->parent_dir;
+        //         }
+        //         else
+        //         {
+        //             new_directory = has_subdir(current_dir, buff);
+        //         }
 
 
-        // generate steps instructions and execute em
+        //         if (new_directory)
+        //         {
+        //             current_dir = new_directory;
+        //             printf("Has movido a la nueva ruta absoluta %s\n", current_dir->absolute_path);
+        //         }
+        //         else
+        //         {
+        //             printf("La ruta relativa %s no existe. Instruccion ignorada. Directorio actual: %s\n", buff, current_dir->absolute_path);
+        //             continue;
+        //         }
+        //     }
+        //     else if (strcmp(key, "mkdir") == 0)
+        //     {
+        //         // fscanf(action_file, "%s\n", buff);
+        //         strcpy(buff_whole_line, r_inst[r_execs++]);
+        //         buff_whole_line[strlen(buff_whole_line)-1] = 0;
+
+        //         printf("Se intentara ejecutar instruccion mkdir %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
+        //         sscanf(buff_whole_line, "%s\n", buff);
+
+        //         char* new_dir_name = strrchr(buff, '/');
+
+        //         char* parent_directory_path;
+        //         Dir* parent_directory;
+
+        //         if (new_dir_name)
+        //         {
+        //             new_dir_name+=1;
+        //             parent_directory_path = malloc(sizeof(char)*(new_dir_name-buff-1));
+        //             strncpy(parent_directory_path, buff, new_dir_name-buff-1);
+        //             parent_directory = has_subdir(current_dir, parent_directory_path);
+        //         }
+        //         else
+        //         {
+        //             new_dir_name = buff;
+        //             parent_directory_path = current_dir->absolute_path;
+        //             parent_directory = current_dir;
+        //         }
+
+        //         if (parent_directory)
+        //         {
+        //             if (is_in(new_dir_name, parent_directory) == -1)
+        //             {
+        //                 uint32_t* free_block = find_free_block(simdisk);
+        //                 if (free_block){
+        //                     // manage file system info
+        //                     uint32_t block_index = free_block-simdisk;
+        //                     Dir* new_dir = init_dir(new_dir_name, block_index);
+        //                     insert_dir(parent_directory, new_dir);
+
+        //                     // manage block info
+        //                     *free_block &= (~FREE_BLOCK); // toggle free_to 0
+        //                     *free_block |= IS_DIRECTORY; // toggle  is directory to 1
+        //                     uint32_t metadata = get_metadata(*free_block);
+
+        //                     // write access
+        //                     fprintf(accesses, "%s.txt\n", new_dir->absolute_path);
+        //                     *free_block = ((current_line_accesses << 8) | metadata);
+
+        //                     current_line_accesses++;
+
+        //                     // log
+        //                     printf("Has creado el directorio en la ruta absoluta %s\n", new_dir->absolute_path);
+        //                 }
+        //                 else
+        //                 {
+        //                     printf("El disco esta lleno. Instruccion ignorada.\n");
+        //                     continue;
+        //                 }
 
 
-        // EJECUTAR STEPS
+
+        //             }
+        //             else
+        //             {
+        //                 printf("La ruta relativa %s ya contiene un directorio llamado %s. Instruccion ignorada.\n", parent_directory_path, new_dir_name);
+        //                 continue;
+        //             }
+        //         }
+        //         else
+        //         {
+        //             printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+        //             continue;
+        //         }
+        //     }
+        //     else if (strcmp(key, "mkfile") == 0)
+        //     {
+        //         // fscanf(action_file, "%s\n", buff);
+        //         strcpy(buff_whole_line, r_inst[r_execs++]);
+        //         buff_whole_line[strlen(buff_whole_line)-1] = 0;
+        //         printf("Se intentara ejecutar instruccion mkfile %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
+        //         sscanf(buff_whole_line, "%s\n", buff);
+
+        //         char* new_file_name = strrchr(buff, '/');
+
+        //         char* parent_directory_path;
+        //         Dir* parent_directory;
+
+        //         if (new_file_name)
+        //         {
+        //             new_file_name+=1;
+        //             parent_directory_path = malloc(sizeof(char)*(new_file_name-buff-1));
+        //             strncpy(parent_directory_path, buff, new_file_name-buff-1);
+        //             parent_directory = has_subdir(current_dir, parent_directory_path);
+        //         }
+        //         else
+        //         {
+        //             new_file_name = buff;
+        //             parent_directory_path = current_dir->absolute_path;
+        //             parent_directory = current_dir;
+        //         }
+
+        //         if (parent_directory)
+        //         {
+
+        //             if (file_is_in(new_file_name, parent_directory) == -1)
+        //             {
+        //                 uint32_t* free_block = find_free_block(simdisk);
+        //                 if (free_block){
+        //                     uint32_t block_index = free_block-simdisk;
+        //                     File* new_file = init_file(new_file_name, block_index);
+        //                     insert_file(parent_directory, new_file);
+        //                     *free_block &= (~FREE_BLOCK); // toggle free_to 0
+        //                     *free_block |= IS_CONTENT; // toggle  is content to 1
+        //                     uint32_t metadata = get_metadata(*free_block);
+        //                     *free_block = ((ENDOFFILE << 8) | metadata);
+
+        //                     printf("Has creado el archivo %s dentro del directorio de ruta absoluta %s\n", new_file_name, parent_directory->absolute_path);
+
+        //                 }
+        //                 else
+        //                 {
+        //                     printf("El disco esta lleno. Instruccion ignorada.\n");
+        //                     continue;
+        //                 }
+        //             }
+        //             else
+        //             {
+        //                 printf("La ruta relativa %s ya contiene un archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, new_file_name);
+        //                 continue;
+        //             }
+        //         }
+        //         else
+        //         {
+        //             printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+        //             continue;
+        //         }
+        //     }
+        //     else if (strcmp(key, "mv") == 0)
+        //     {
+        //         // sscanf(buff_whole_line, "%s %s", buff, buff2);
+        //         strcpy(buff_whole_line, r_inst[r_execs++]);
+        //         buff_whole_line[strlen(buff_whole_line)-1] = 0;
+        //         printf("Se intentara ejecutar instruccion mv %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
+        //         // if (fscanf(action_file, "%s %s\n", buff, buff2) != 2)
+        //         if (sscanf(buff_whole_line, "%s %s", buff, buff2) != 2)
+        //         {
+        //             printf("Debes ingresar tanto la ruta relativa del archivo a mover como el nuevo destino. Instruccion  %s ignorada.\n", buff_whole_line);
+        //             continue;
+        //         }
+
+        //         Dir* destination_parent_dir = has_subdir(current_dir, buff2);
+
+        //         if (!(destination_parent_dir))
+        //         {
+        //             printf("La ruta relativa de destino %s no existe. Instruccion ignorada.\n", buff2);
+        //             continue;
+        //         }
+        //         else
+        //         {
+        //             char* sth_to_move_name = strrchr(buff, '/');
+
+        //             char* parent_directory_path;
+        //             Dir* parent_directory;
+
+        //             if (sth_to_move_name)
+        //             {
+        //                 // it wasnt directly under the current dir
+        //                 sth_to_move_name+=1;
+        //                 parent_directory_path = malloc(sizeof(char)*(sth_to_move_name-buff-1));
+        //                 strncpy(parent_directory_path, buff, sth_to_move_name-buff-1);
+        //                 parent_directory = has_subdir(current_dir, parent_directory_path);
+        //             }
+        //             else
+        //             {
+        //                 sth_to_move_name = buff;
+        //                 // strcpy(sth_to_move_name, buff);
+        //                 parent_directory_path = current_dir->absolute_path;
+        //                 parent_directory = current_dir;
+        //             }
+
+        //             if (parent_directory)
+        //             {
+        //                 // check if sth is file
+        //                 if (file_is_in(sth_to_move_name, parent_directory) != -1)
+        //                 {
+
+        //                     File* file_to_move = parent_directory -> files[file_is_in(sth_to_move_name, parent_directory)];
+        //                     remove_file(parent_directory, file_to_move);
+        //                     insert_file(destination_parent_dir, file_to_move);
+
+        //                     printf("Se ha movido el archivo %s a la ruta %s\n", buff, buff2);
+        //                     for (int i = 0; i < current_dir -> n_files; ++i)
+        //                     {
+        //                         printf("Dir actual contiene archivo %s\n", current_dir -> files[i]->name);
+        //                     }
+        //                 }
+        //                 else
+        //                 {
+        //                     // now check if it was dir
+        //                     if (is_in(sth_to_move_name, parent_directory) != -1)
+        //                     {
+        //                         Dir* dir_to_move = parent_directory -> subdirs[is_in(sth_to_move_name, parent_directory)];
+
+        //                         // remove_dir(parent_directory, dir_to_move);
+        //                         // delete_release_and_destroy(dir_to_move, simdisk);
+
+        //                         remove_dir(parent_directory, dir_to_move);
+        //                         insert_dir(destination_parent_dir, dir_to_move);
+
+        //                         // Correct access info and
+        //                         fprintf(accesses, "%s.txt\n", dir_to_move->absolute_path);
+        //                         simdisk[dir_to_move -> mem_dir] = ((current_line_accesses << 8) | get_metadata(simdisk[dir_to_move -> mem_dir]));
+        //                         current_line_accesses++;
+
+        //                         for (int subd_index = 0; subd_index < dir_to_move -> n_subdirs; ++subd_index)
+        //                         {
+        //                             update_absolute_path(dir_to_move -> subdirs[subd_index],
+        //                                                 dir_to_move -> absolute_path,
+        //                                                 simdisk,
+        //                                                 &current_line_accesses,
+        //                                                 accesses);
+        //                         }
+        //                         printf("Se ha movido el directorio %s a la ruta %s\n", buff, buff2);
+
+
+        //                     }
+        //                     else
+        //                     {
+        //                         printf("La ruta relativa %s no contiene ni directorio ni archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, sth_to_move_name);
+        //                         continue;
+        //                     }
+        //                 }
+        //             }
+        //             else
+        //             {
+        //                 printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+        //                 continue;
+        //             }
+        //         }
+        //     }
+        //     else if (strcmp(key, "rm") == 0)
+        //     {
+        //         // fscanf(action_file, "%s\n", buff);
+        //         strcpy(buff_whole_line, r_inst[r_execs++]);
+        //         buff_whole_line[strlen(buff_whole_line)-1] = 0;
+        //         printf("Se intentara ejecutar instruccion rm %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
+        //         sscanf(buff_whole_line, "%s", buff);
+
+        //         char* sth_to_rm_name = strrchr(buff, '/');
+
+        //         char* parent_directory_path;
+        //         Dir* parent_directory;
+
+        //         if (sth_to_rm_name)
+        //         {
+        //             sth_to_rm_name+=1;
+        //             parent_directory_path = malloc(sizeof(char)*(sth_to_rm_name-buff-1));
+        //             strncpy(parent_directory_path, buff, sth_to_rm_name-buff-1);
+        //             parent_directory = has_subdir(current_dir, parent_directory_path);
+        //         }
+        //         else
+        //         {
+        //             sth_to_rm_name = buff;
+        //             parent_directory_path = current_dir->absolute_path;
+        //             parent_directory = current_dir;
+        //         }
+
+        //         if (parent_directory)
+        //         {
+        //             // check if sth is file
+        //             if (file_is_in(sth_to_rm_name, parent_directory) != -1)
+        //             {
+        //                 File* file_to_rm = parent_directory -> files[file_is_in(sth_to_rm_name, parent_directory)];
+        //                 remove_file(parent_directory, file_to_rm);
+        //                 release_block_trail(file_to_rm, simdisk);
+        //                 destroy_file(file_to_rm);
+
+        //                 printf("Has eliminado el archivo %s dentro del directorio de ruta absoluta %s\n", sth_to_rm_name, parent_directory->absolute_path);
+        //             }
+        //             else
+        //             {
+        //                 // now check if it was dir
+        //                 if (is_in(sth_to_rm_name, parent_directory) != -1)
+        //                 {
+        //                     Dir* dir_to_rm = parent_directory -> subdirs[is_in(sth_to_rm_name, parent_directory)];
+        //                     remove_dir(parent_directory, dir_to_rm);
+        //                     delete_release_and_destroy_dir(dir_to_rm, simdisk);
+        //                     printf("Has eliminado el directorio %s (y sus subdirectorios) dentro del directorio de ruta absoluta %s\n", sth_to_rm_name, parent_directory->absolute_path);
+        //                 }
+        //                 else
+        //                 {
+        //                     printf("La ruta relativa %s no contiene ni directorio ni archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, sth_to_rm_name);
+        //                     continue;
+        //                 }
+        //             }
+        //         }
+        //         else
+        //         {
+        //             printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+        //             continue;
+        //         }
+        //     }
+        //     else if (strcmp(key, "ad") == 0)
+        //     {
+        //         strcpy(buff_whole_line, r_inst[r_execs++]);
+        //         buff_whole_line[strlen(buff_whole_line)-1] = 0;
+        //         printf("Se intentara ejecutar instruccion ad %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
+        //         int num_scans = sscanf(buff_whole_line, "%s %s %s\n", buff, buff2, buff3);
+        //         // int num_scans = fscanf(action_file, "%s %s %s\n", buff, buff2, buff3);
+
+
+        //         if (num_scans == 2 || num_scans == 3){
+
+
+        //             char* file_to_w_name = strrchr(buff, '/');
+
+
+        //             char* parent_directory_path;
+        //             Dir* parent_directory;
+
+        //             if (file_to_w_name)
+        //             {
+        //                 file_to_w_name+=1;
+        //                 parent_directory_path = malloc(sizeof(char)*(file_to_w_name-buff-1));
+        //                 strncpy(parent_directory_path, buff, file_to_w_name-buff-1);
+        //                 parent_directory = has_subdir(current_dir, parent_directory_path);
+        //             }
+        //             else
+        //             {
+        //                 file_to_w_name = buff;
+        //                 parent_directory_path = current_dir->absolute_path;
+        //                 parent_directory = current_dir;
+        //             }
+
+        //             if (parent_directory)
+        //             {
+        //                 // get _ file now
+        //                 if (file_is_in(file_to_w_name, parent_directory) != -1)
+        //                 {
+        //                     File* file_to_write = parent_directory -> files[file_is_in(file_to_w_name, parent_directory)];
+        //                     int write_offset = file_to_write -> memory_used ; // "last position + 1 (first empty byte)"
+        //                     if (num_scans == 3)
+        //                     {
+        //                         write_offset = atoi(buff3);
+        //                     }
+
+        //                     int barrier = 4096;
+        //                     while (file_to_write -> memory_used > barrier)
+        //                     {
+        //                         barrier+= 4096;
+        //                     }
+
+        //                     int final_w_pos = write_offset + atoi(buff2);
+        //                     if (final_w_pos > barrier)
+        //                     {
+        //                         int additional_blocks = 0;
+        //                         int temp_start = final_w_pos-1;
+        //                         while (temp_start > barrier)
+        //                         {
+        //                             additional_blocks++;
+        //                             temp_start -= 4096;
+        //                         }
+        //                         int broke = 0;
+        //                         for (int iter = 0; iter < additional_blocks; ++iter)
+        //                         {
+        //                             // find empty block, asign it fixing recursive last block,
+
+        //                             uint32_t* free_block = find_free_block(simdisk);
+        //                             if (free_block){
+        //                                 uint32_t last_block_index = recursive_get_last_block_index(simdisk, file_to_write->mem_dir);
+        //                                 uint32_t meta = get_metadata(simdisk[last_block_index]);
+        //                                 simdisk[last_block_index] = (((free_block - simdisk) << 8) | meta);
+
+        //                                 *free_block &= (~FREE_BLOCK); // toggle free_to 0
+        //                                 *free_block |= IS_CONTENT; // toggle  is content to 1
+        //                                 uint32_t metadata = get_metadata(*free_block);
+        //                                 *free_block = ((ENDOFFILE << 8) | metadata);
+        //                             }
+        //                             else
+        //                             {
+        //                                 printf("El disco esta lleno. Escritura detenida.\n");
+        //                                 broke = 1;
+        //                                 break;
+        //                             }
+        //                         }
+
+        //                         if (broke)
+        //                         {
+        //                             printf("Se ha llevado a cabo la escritura parcialmente pues se acabo el espacio en disco.\n");
+        //                             continue;
+        //                         }
+        //                         printf("Se han escrito %d bytes en archivo %s de directorio %s\n", atoi(buff2), file_to_write->name, parent_directory_path);
+        //                     }
+
+        //                     file_to_write -> memory_used = final_w_pos-1;
+
+        //                 }
+        //                 else
+        //                 {
+        //                     printf("La ruta relativa %s no contiene un archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, file_to_w_name);
+        //                     continue;
+        //                 }
+        //             }
+        //             else
+        //             {
+        //                 printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+        //                 continue;
+        //             }
+        //         }
+        //         else
+        //         {
+        //             printf("Debes ingresar la ruta relativa al archivo y la cantidad de bytes a agregar, \
+        //                 seguido opcionalmente de la posicion en el archivo que deseas comenzar la escritura. Instruccion  %s ignorada.\n", buff_whole_line);
+        //             continue;
+        //         }
+        //     }
+        //     else if (strcmp(key, "rd") == 0)
+        //     {
+        //         strcpy(buff_whole_line, r_inst[r_execs++]);
+        //         buff_whole_line[strlen(buff_whole_line)-1] = 0;
+
+        //         printf("Se intentara ejecutar instruccion rd %s. Instrucciones correctamente ejecutadas: %i. Paso actual: %i\n",buff_whole_line, counter, executed_instructions);
+        //         int num_scans = sscanf(buff_whole_line, "%s %s %s\n", buff, buff2, buff3);
+
+        //         if (num_scans == 2 || num_scans == 3){
+
+
+        //             char* file_to_w_name = strrchr(buff, '/');
+
+        //             char* parent_directory_path;
+        //             Dir* parent_directory;
+
+        //             if (file_to_w_name)
+        //             {
+        //                 file_to_w_name+=1;
+        //                 parent_directory_path = malloc(sizeof(char)*(file_to_w_name-buff-1));
+        //                 strncpy(parent_directory_path, buff, file_to_w_name-buff-1);
+        //                 parent_directory = has_subdir(current_dir, parent_directory_path);
+        //             }
+        //             else
+        //             {
+        //                 file_to_w_name = buff;
+        //                 parent_directory_path = current_dir->absolute_path;
+        //                 parent_directory = current_dir;
+        //             }
+
+        //             if (parent_directory)
+        //             {
+        //                 // get _ file now
+        //                 if (file_is_in(file_to_w_name, parent_directory) != -1)
+        //                 {
+        //                     File* file_to_write = parent_directory -> files[file_is_in(file_to_w_name, parent_directory)];
+        //                     int write_starting_index = file_to_write -> memory_used - atoi(buff2) ; // "last position + 1 (first empty byte)"
+        //                     if (num_scans == 3)
+        //                     {
+        //                         write_starting_index = atoi(buff3);
+        //                     }
+
+        //                     int remaining_lines_till_full;
+        //                     int block_of_starting_w = find_number_of_block_of_line(write_starting_index, &remaining_lines_till_full);
+
+        //                     if (atoi(buff2) > remaining_lines_till_full)
+        //                     {
+        //                         // first reach block of starting
+        //                         uint32_t block_pointer_index = file_to_write -> mem_dir;
+        //                         for (int i = 0; i < block_of_starting_w; ++i)
+        //                         {
+        //                             block_pointer_index = get_pointer(simdisk[block_pointer_index]);
+        //                         }
+
+        //                         // handle border case if deletion starts on first block
+        //                         if (block_pointer_index == 0)
+        //                         {
+        //                             // el bloque cero siempre contendra los primeros 50B, por lo que
+        //                             // para cada 4096 dps de los primeros remaining se borraran bloques
+        //                             int additional_deletion = atoi(buff2) - remaining_lines_till_full;
+        //                             // for every 4096, delete a block
+        //                             int num_blocks = 0;
+        //                             int temp_c = additional_deletion;
+        //                             while (temp_c > 4096)
+        //                             {
+        //                                 num_blocks++;
+        //                                 temp_c -= 4096;
+        //                             }
+
+        //                             for (int iter = 0; iter < num_blocks; ++iter)
+        //                             {
+        //                                 uint32_t ptr_to_next = get_pointer(simdisk[block_pointer_index]);
+        //                                 uint32_t point_now_at = get_pointer(simdisk[ptr_to_next]);
+        //                                 simdisk[ptr_to_next] = FREE_BLOCK;
+        //                                 simdisk[block_pointer_index] = (point_now_at << 8) | get_metadata(simdisk[block_pointer_index]);
+        //                             }
+        //                         }
+        //                         else
+        //                         {
+        //                             // at least one block must be freed
+        //                             if (write_starting_index % 4096 == 0){
+        //                                 // for
+        //                                 int num_blocks = 0;
+        //                                 int temp_c = atoi(buff2);
+        //                                 while (temp_c > 4096)
+        //                                 {
+        //                                     num_blocks++;
+        //                                     temp_c -= 4096;
+        //                                 }
+
+        //                                 // since the deletions here include deleting the starting block,
+        //                                 // find the reference to the previous one before deleting
+        //                                 uint32_t block_pointer_index = file_to_write -> mem_dir;
+        //                                 for (int i = 0; i < block_of_starting_w-1; ++i)
+        //                                 {
+        //                                     block_pointer_index = get_pointer(simdisk[block_pointer_index]);
+        //                                 }
+
+        //                                 for (int iter = 0; iter < num_blocks; ++iter)
+        //                                 {
+        //                                     uint32_t ptr_to_next = get_pointer(simdisk[block_pointer_index]);
+        //                                     uint32_t point_now_at = get_pointer(simdisk[ptr_to_next]);
+        //                                     simdisk[ptr_to_next] = FREE_BLOCK;
+        //                                     simdisk[block_pointer_index] = (point_now_at << 8) | get_metadata(simdisk[block_pointer_index]);
+        //                                 }
+        //                             }
+        //                             else
+        //                             {
+        //                                 // for every 4096 after the remaining lines, delete a block, starting from next one
+        //                                 int additional_deletion = atoi(buff2) - remaining_lines_till_full;
+        //                                 // for every 4096, delete a block
+        //                                 int num_blocks = 0;
+        //                                 int temp_c = additional_deletion;
+        //                                 while (temp_c > 4096)
+        //                                 {
+        //                                     num_blocks++;
+        //                                     temp_c -= 4096;
+        //                                 }
+
+        //                                 for (int iter = 0; iter < num_blocks; ++iter)
+        //                                 {
+        //                                     uint32_t ptr_to_next = get_pointer(simdisk[block_pointer_index]);
+        //                                     uint32_t point_now_at = get_pointer(simdisk[ptr_to_next]);
+        //                                     simdisk[ptr_to_next] = FREE_BLOCK;
+        //                                     simdisk[block_pointer_index] = (point_now_at << 8) | get_metadata(simdisk[block_pointer_index]);
+        //                                 }
+
+        //                             }
+
+        //                         }
+        //                     }
+
+        //                     if (file_to_write -> memory_used - atoi(buff2) < 50)
+        //                     {
+        //                         file_to_write -> memory_used = 50;
+        //                     }
+        //                     else
+        //                     {
+        //                         file_to_write -> memory_used -= atoi(buff2);
+        //                     }
+
+        //                     printf("Se han eliminado %i bytes del archivo %s\n", atoi(buff2), file_to_w_name);
+
+        //                 }
+        //                 else
+        //                 {
+        //                     printf("La ruta relativa %s no contiene un archivo llamado %s. Instruccion ignorada.\n", parent_directory_path, file_to_w_name);
+        //                     continue;
+        //                 }
+        //             }
+        //             else
+        //             {
+        //                 printf("La ruta relativa %s no existe. Instruccion ignorada.\n", parent_directory_path);
+        //                 continue;
+        //             }
+        //         }
+        //         else
+        //         {
+        //             printf("Debes ingresar la ruta relativa al archivo y la cantidad de bytes a eliminar, \
+        //                 seguido opcionalmente de la posicion en el archivo que deseas comenzar la eliminacion. Instruccion ignorada.\n");
+        //             continue;
+        //         }
+        //     }
+        //     else
+        //     {
+        //         printf("%s is not a valid instruction. Ignored.\n", key);
+        //     }
+
+        //     if (acum_flags & UNTILL)
+        //     {
+        //         executed_instructions++;
+        //         if (executed_instructions == steps)
+        //         {
+        //             break;
+        //         }
+        //     }
+        //     counter++;
+        //     printf("\n");
+        //     executed_instructions++;
+    //}
+
     }
 
 
     fclose(accesses);
 
-    // GENERAR DIRECTORIOS Y .TXTS RESPECTIVOS RECURSIVAMENTE Y AÑADIR RUTAS A ESOS .TXTS EN ACCESOS.TXT Y GENERAR BITMAP
+    // for (int i = 0; i < 100; ++i)
+    // {
+    //     printf("%"PRIu32".", simdisk[i]);
+    // }
+    // printf("\n");
 
+
+    FILE *output;
+    output = fopen("simdisk.fat", "wb");
+    fwrite(simdisk, sizeof(uint32_t), DISK_SIZE / sizeof(uint32_t), output);
+    // GENERAR DIRECTORIOS Y .TXTS RESPECTIVOS RECURSIVAMENTE Y AÑADIR RUTAS A ESOS .TXTS EN ACCESOS.TXT Y GENERAR BITMAP
+    // save_create_dir(root_dir);
 
 }

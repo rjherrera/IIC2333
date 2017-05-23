@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define SEED 1
 #define ACTIONS 2
@@ -137,7 +139,7 @@ void remove_dir(Dir* dir, Dir* subdir_to_remove){
             if (dir -> subdirs[index] == subdir_to_remove) dir -> subdirs[index] = last_inserted;
         }
     }
-    dir ->n_subdirs--; 
+    dir ->n_subdirs--;
 }
 
 void recursive_release(uint32_t* simdisk, uint32_t block_index){
@@ -222,7 +224,7 @@ void remove_file(Dir* dir, File* file_to_remove){
             if (dir -> files[index] == file_to_remove) dir -> files[index] = last_inserted;
         }
     }
-    dir ->n_files--; 
+    dir ->n_files--;
 }
 
 void insert_file(Dir* dir, File* file){
@@ -305,3 +307,24 @@ Dir* has_subdir(Dir* actual_dir, char* path){
     // printf("Finalmente estoy en dir: %s\n", actual_dir -> name);
     return actual_dir;
 }
+
+void save_create_dir(Dir* dir){
+    FILE *output;
+    char* file_name = malloc(sizeof(char) * (strlen(dir -> name) + 4));
+    sprintf(file_name, "%s/%s.txt", dir -> absolute_path, dir -> name);
+    mkdir(dir -> absolute_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    output = fopen(file_name, "w");
+    for (int i = 0; i < dir -> n_files; ++i){
+        File* ifile = dir -> files[i];
+        fprintf(output, "%s,%u,%u\n", ifile -> name, ifile -> mem_dir, ifile -> memory_used);
+    }
+    fclose(output);
+    free(file_name);
+    // recursive part
+    for (int i = 0; i < dir -> n_subdirs; ++i){
+        save_create_dir(dir -> subdirs[i]);
+    }
+
+}
+
+
