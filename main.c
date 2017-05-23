@@ -835,12 +835,14 @@ int main(int argc, char** argv)
         }
         fclose(action_file);
         if (executed_instructions < steps){
+            printf("Random:\n");
             char** r_inst = generate_random_instructions(atoi(seed), steps - executed_instructions);
             // printf("%s\n", r_inst[0]);
             int r_execs = 0;
             sscanf(r_inst[r_execs++], "%s %s", key, buff_whole_line);
 
             while (executed_instructions < steps){
+                executed_instructions++;
                 // strncpy(key, r_inst[r_execs], 10);
                 if (strcmp(key, "cd") == 0)
                 {
@@ -1464,7 +1466,6 @@ int main(int argc, char** argv)
                 }
                 counter++;
                 printf("\n");
-                executed_instructions++;
             }
         }
 
