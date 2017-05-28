@@ -74,12 +74,10 @@ Ship* destroyer_init(int is_vertical, int list_index){
     return al;
 }
 
-
 void destroy_ship(Ship* ship){
     free(ship -> name);
     free(ship);
 }
-
 
 typedef struct cell{
     char board_id;
