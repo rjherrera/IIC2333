@@ -95,7 +95,7 @@ Cell* cell_init(){
 
 void place_ship(Cell*** grid, Ship* ship, int x, int y){
     // Returns 0 if placed correctly, and -1 if there was another ship
-    if (ship->is_vertical) 
+    if (ship->is_vertical)
     {
         for (int i = 0; i < ship->length; ++i)
         {
@@ -120,7 +120,7 @@ void place_ship(Cell*** grid, Ship* ship, int x, int y){
 int is_alive(Ship* ship, Cell*** grid)
 {
     int alive = 0;
-    if (ship->is_vertical) 
+    if (ship->is_vertical)
     {
         for (int i = 0; i < ship->length; ++i)
         {
@@ -146,7 +146,7 @@ int is_alive(Ship* ship, Cell*** grid)
 int is_occupied(Ship* ship, Cell*** grid, int x, int y)
 {
     int occupied = 0;
-    if (ship->is_vertical) 
+    if (ship->is_vertical)
     {
         for (int i = 0; i < ship->length; ++i)
         {
@@ -229,7 +229,7 @@ Ship* choose_ship(int list_index){
         {
             incorrect = 1;
             printf("Invalid selection. Try again.\n");
-        }        
+        }
     }
 
     printf("Do you want to place it vertically or horizontally? Vertically: 1, Horizontally: 0\n");
@@ -253,7 +253,7 @@ Ship* choose_ship(int list_index){
         {
             incorrect = 1;
             printf("Invalid selection. Try again.\n");
-        }        
+        }
     }
 
     if (selected == 1){
@@ -277,7 +277,7 @@ Ship* choose_ship(int list_index){
     }
 }
 
-void choose_position(Ship* ship, Cell*** grid)
+void choose_position(Ship* ship, Cell*** grid, int* out_x, int* out_y)
 {
     printf("Choose %s position (x, y) in format: 'x y'.\n", ship->name);
     printf("NOTE: If ship is horizontally oriented, (x, y) will be position of leftmost tile.");
@@ -330,7 +330,8 @@ void choose_position(Ship* ship, Cell*** grid)
     }
 
     place_ship(grid, ship, x, y);
-
+    *out_x = x;
+    *out_y = y;
 }
 
 void print_grid(Cell*** grid)
@@ -348,13 +349,13 @@ void print_grid(Cell*** grid)
 
 void print_both_grids(Cell*** grid, char** enemy_grid)
 {
-    for (int i = 0; i < 50; ++i)
+    for (int i = 0; i < 2; ++i)
     {
         printf("\n");
     }
     printf("Current State:\n");
-    printf("|                Your Board                 | \t\t |                   Enemy Board             |\n"); 
-    printf("|   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | \t\t |   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |\n"); 
+    printf("|                Your Board                 | \t\t |                   Enemy Board             |\n");
+    printf("|   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | \t\t |   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |\n");
     for (int row = 0; row < 10; ++row)
     {
         printf("| %d | %c | %c | %c | %c | %c | %c | %c | %c | %c | %c | \t\t | %d | %c | %c | %c | %c | %c | %c | %c | %c | %c | %c |\n",
@@ -364,7 +365,7 @@ void print_both_grids(Cell*** grid, char** enemy_grid)
                 grid[row][9]->board_id, row, enemy_grid[row][0],enemy_grid[row][1],enemy_grid[row][2],
                 enemy_grid[row][3],enemy_grid[row][4],enemy_grid[row][5],enemy_grid[row][6],
                 enemy_grid[row][7],enemy_grid[row][8],enemy_grid[row][9]);
-    }    
+    }
 }
 
 void mark_sent_attack(char** enemy_grid, int x, int y)
