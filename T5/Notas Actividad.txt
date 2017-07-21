@@ -1,0 +1,48 @@
+¡Hola Raimundo Pérez!
+Tu dirección IP es: 192.168.1.157
+Esta es tu lista de IPs para obtener estadísticas:
+
+192.168.1.11
+192.168.1.143
+192.168.1.162
+192.168.1.160
+192.168.1.114
+192.168.1.152
+192.168.1.141
+192.168.1.140
+192.168.1.142
+192.168.1.158
+
+--- 192.168.1.11 ping statistics ---
+22 packets transmitted, 21 packets received, 4.5% packet loss
+round-trip min/avg/max/stddev = 1002.516/1005.801/1007.642/1.992 ms
+
+--- 192.168.1.143 ping statistics ---
+13 packets transmitted, 0 packets received, 100.0% packet loss
+
+--- 192.168.1.162 ping statistics ---
+20 packets transmitted, 0 packets received, 100.0% packet loss
+
+--- 192.168.1.160 ping statistics ---
+14 packets transmitted, 0 packets received, 100.0% packet loss
+
+--- 192.168.1.114 ping statistics ---
+19 packets transmitted, 19 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 1.737/3.280/20.860/4.150 ms
+
+--- 192.168.1.152 ping statistics ---
+12 packets transmitted, 0 packets received, 100.0% packet loss
+
+--- 192.168.1.141 ping statistics ---
+22 packets transmitted, 22 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 35.151/140.512/409.441/103.812 ms
+
+--- 192.168.1.140 ping statistics ---
+17 packets transmitted, 17 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 2.100/2.475/3.367/0.309 ms
+
+--- 192.168.1.142 ping statistics ---
+16 packets transmitted, 0 packets received, 100.0% packet loss
+
+--- 192.168.1.158 ping statistics ---
+12 packets transmitted, 0 packets received, 100.0% packet loss
